@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2196F3">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Match Tagger">
+    <title>Match Tagger</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json">
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512x512.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="./icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="./icons/icon-512x512.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            padding: 10px;
+        }
+
+        .header {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            text-align: center;
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .version {
+            font-size: 12px;
+            color: #999;
+            font-weight: normal;
+        }
+
+        .header-btn {
+            position: absolute;
+            top: 0;
+            background: #2196F3;
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .header-btn:hover {
+            background: #1976D2;
+        }
+
+        .header-btn.left {
+            left: 0;
+        }
+
+        .section {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .button-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .button-grid button {
+            flex: 0 1 calc(25% - 8px);
+            min-width: 70px;
+            padding: 15px 8px;
+            font-size: 13px;
+            font-weight: bold;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .category-btn.selected {
+            background: #2196F3;
+            color: white;
+            border-color: #2196F3;
+        }
+
+        .event-btn {
+            background: #fff3e0;
+            border-color: #ff9800;
+        }
+
+        .event-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .event-btn.selected {
+            background: #ff9800;
+            color: white;
+        }
+
+        .period-btn {
+            flex: 1 1 calc(50% - 8px);
+            padding: 12px;
+            font-size: 13px;
+            font-weight: bold;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .period-btn.active {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .period-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        #status {
+            text-align: center;
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            flex: 1 1 calc(33% - 8px);
+            padding: 10px;
+            font-size: 13px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            min-width: 100px;
+        }
+
+        .control-btn.primary {
+            background: #4CAF50;
+        }
+
+        .control-btn.danger {
+            background: #f44336;
+        }
+
+        .control-btn.warning {
+            background: #ff9800;
+        }
+
+        .stats {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .stat-box {
+            flex: 1;
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2196F3;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Matrix styles */
+        .matrix-container {
+            overflow: auto;
+            margin-top: 15px;
+            max-height: 400px;
+        }
+
+        .matrix-table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 11px;
+        }
+
+        .matrix-table th,
+        .matrix-table td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: center;
+            min-width: 50px;
+        }
+
+        .matrix-table th {
+            background-color: #2196F3;
+            color: white;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .matrix-table th.category-header {
+            background-color: #1976D2;
+            text-align: left;
+            position: sticky;
+            left: 0;
+            z-index: 11;
+        }
+
+        .matrix-table td.category-cell {
+            background-color: #f5f5f5;
+            font-weight: bold;
+            text-align: left;
+            position: sticky;
+            left: 0;
+            z-index: 5;
+            font-size: 11px;
+        }
+
+        .matrix-table td.count-cell {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .matrix-table td.count-cell:hover {
+            background-color: #e3f2fd;
+        }
+
+        .matrix-table td.count-cell.has-events {
+            background-color: #c8e6c9;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 450px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 32px;
+            font-weight: bold;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            line-height: 32px;
+            text-align: center;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .game-name-display {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 10px;
+            font-size: 14px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+        }
+
+        .modal-btn.primary {
+            background: #4CAF50;
+        }
+
+        .modal-btn.secondary {
+            background: #999;
+        }
+
+        .recent-events {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .recent-events h3 {
+            font-size: 14px;
+            margin: 0 0 10px 0;
+            color: #666;
+        }
+
+        .recent-events-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .recent-event-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .recent-event-info {
+            flex: 1;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .recent-event-time {
+            font-weight: bold;
+            color: #2196F3;
+            min-width: 45px;
+        }
+
+        .recent-event-cat {
+            font-weight: bold;
+            min-width: 80px;
+        }
+
+        .recent-event-desc {
+            color: #666;
+        }
+
+        .delete-event-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+            min-width: 28px;
+        }
+
+        .delete-event-btn:hover {
+            background: #d32f2f;
+        }
+
+        .no-recent-events {
+            text-align: center;
+            padding: 15px;
+            color: #999;
+            font-size: 12px;
+        }
+
+        .timeline-modal {
+            max-width: 95%;
+            max-height: 95vh;
+            width: 1200px;
+        }
+
+        .timeline-events {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .timeline-event {
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #f5f5f5;
+            border-left: 4px solid #2196F3;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .timeline-event-time {
+            font-weight: bold;
+            color: #2196F3;
+            margin-bottom: 4px;
+        }
+
+        .timeline-event-details {
+            color: #666;
+        }
+
+        /* Splash Screen */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .splash-screen.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .splash-screen.fade-out {
+            opacity: 0;
+        }
+
+        .splash-content {
+            text-align: center;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .splash-logo {
+            width: 150px;
+            height: 150px;
+            border-radius: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .splash-title {
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .splash-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        .splash-hint {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            position: absolute;
+            bottom: 40px;
+            left: 0;
+            right: 0;
+            text-align: center;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .button-grid button {
+                flex: 0 1 calc(50% - 8px);
+            }
+            .control-btn {
+                flex: 1 1 calc(50% - 8px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splashScreen" class="splash-screen" onclick="dismissSplash()">
+        <div class="splash-content">
+            <img src="./icons/icon-192x192.png" alt="Match Tagger Logo" class="splash-logo" onerror="this.style.display='none'">
+            <div class="splash-title">Match Tagger</div>
+            <div class="splash-subtitle">Track Match Flow & Team Events</div>
+        </div>
+        <div class="splash-hint">Tap anywhere to continue</div>
+    </div>
+
+    <div class="header">
+        <button onclick="openSettingsModal()" class="header-btn left">
+            ⚙️ Settings
+        </button>
+        <h1>Match Tagger <span class="version">v1.0</span></h1>
+    </div>
+
+    <div id="status">Ready - Select an event category</div>
+
+    <div class="stats">
+        <div class="stat-box">
+            <div class="stat-value" id="team1Score">0:0</div>
+            <div class="stat-label" id="team1Label">Us</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value" id="gameClock">00:00</div>
+            <div class="stat-label">Game Clock</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value" id="team2Score">0:0</div>
+            <div class="stat-label" id="team2Label">Opposition</div>
+        </div>
+    </div>
+    <div class="stats">
+        <div class="stat-box">
+            <div class="stat-value" id="currentPeriod">Not Started</div>
+            <div class="stat-label">Period</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value" id="eventCount">0</div>
+            <div class="stat-label">Events</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="control-btn primary" onclick="downloadCSV()">Download CSV</button>
+        <button class="control-btn primary" onclick="document.getElementById('csvImport').click()">Import CSV</button>
+        <button class="control-btn warning" onclick="openTimeline()">Timeline</button>
+        <button class="control-btn danger" onclick="endGame()">End Game</button>
+    </div>
+
+    <input type="file" id="csvImport" accept=".csv" style="display: none;" onchange="importCSV(event)">
+
+    <div class="section">
+        <h2>Game Period</h2>
+        <div class="button-grid">
+            <button class="period-btn" onclick="setPeriod(this, '1st Half Started')">Start 1st Half</button>
+            <button class="period-btn" onclick="setPeriod(this, '1st Half Ended')">End 1st Half</button>
+            <button class="period-btn" onclick="setPeriod(this, '2nd Half Started')">Start 2nd Half</button>
+            <button class="period-btn" onclick="setPeriod(this, '2nd Half Ended')">End 2nd Half</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Event Categories</h2>
+        <div class="button-grid" id="categoryGrid"></div>
+    </div>
+
+    <div class="section">
+        <h2>Event Types</h2>
+        <div class="button-grid" id="eventGrid"></div>
+    </div>
+
+    <div class="controls">
+        <button class="control-btn primary" onclick="saveEvent()" id="saveEventBtn" style="display: none;">💾 Save Event</button>
+    </div>
+
+    <div class="section">
+        <h2>Event Matrix</h2>
+        <p style="font-size: 12px; color: #666; margin-bottom: 10px;">
+            Count of events for each category-event combination
+        </p>
+        <div class="matrix-container">
+            <table class="matrix-table" id="eventMatrix">
+                <thead>
+                    <tr>
+                        <th class="category-header">Category</th>
+                    </tr>
+                </thead>
+                <tbody id="matrixBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="recent-events">
+        <h3>Recent Events</h3>
+        <div class="recent-events-list" id="recentEventsList">
+            <div class="no-recent-events">No events yet</div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Settings</h2>
+                <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
+            </div>
+
+            <div class="game-name-display" id="gameNameDisplay">Match: Team A vs Team B</div>
+
+            <div class="form-group">
+                <label for="team1Name">Our Team Name</label>
+                <input type="text" id="team1Name" placeholder="Our Team" oninput="updateGameName()">
+            </div>
+
+            <div class="form-group">
+                <label for="team2Name">Opposition Team Name</label>
+                <input type="text" id="team2Name" placeholder="Opposition" oninput="updateGameName()">
+            </div>
+
+            <div class="modal-buttons">
+                <button class="modal-btn primary" onclick="startNewGame()">Start New Game</button>
+                <button class="modal-btn secondary" onclick="closeSettingsModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline Modal -->
+    <div id="timelineModal" class="modal">
+        <div class="modal-content timeline-modal">
+            <div class="modal-header">
+                <h2>📊 Match Timeline</h2>
+                <button class="modal-close" onclick="closeTimeline()">&times;</button>
+            </div>
+            <div class="timeline-events" id="timelineEvents"></div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // STATE MANAGEMENT
+        // ============================================
+        let events = [];
+        let currentPeriod = 'Not Started';
+        let currentCategory = '';
+        let selectedEvents = [];
+        let timerInterval = null;
+        let timerSeconds = 0;
+        let team1Name = 'Us';
+        let team2Name = 'Opposition';
+        let gameName = 'Match';
+
+        // Event categories for team-level tracking
+        const categories = {
+            'Possession': ['OUR', 'OPP'],
+            'Attack Phase': ['OUR', 'OPP'],
+            'Defense Phase': ['OUR', 'OPP'],
+            'Turnover': ['OUR', 'OPP'],
+            'Set Piece': ['OUR', 'OPP'],
+            'Score Attempt': ['OUR', 'OPP'],
+            'Score': ['OUR', 'OPP'],
+            'Foul': ['OUR', 'OPP'],
+            'Card': ['OUR', 'OPP']
+        };
+
+        // Event types for each category
+        const eventTypes = {
+            'Possession': ['Won', 'Lost', 'Long', 'Short', 'From Kickout', 'From Turnover'],
+            'Attack Phase': ['Build-up', 'Fast Break', 'Counter', 'Sustained', 'Inside 50'],
+            'Defense Phase': ['Structured', 'Press High', 'Drop Deep', 'Force Wide', 'Turnover Won'],
+            'Turnover': ['Forced', 'Unforced', 'Interception', 'Tackle', 'Block Down'],
+            'Set Piece': ['Kickout', 'Free Kick', 'Sideline', '45', 'Penalty'],
+            'Score Attempt': ['Shot', 'Goal Attempt', 'Point Attempt', 'Inside 21', 'Outside 45'],
+            'Score': ['Goal', 'Point', '2 Pointer', 'Free', 'Play'],
+            'Foul': ['Technical', 'Aggressive', 'Advantage', 'Free Against'],
+            'Card': ['Yellow', 'Red', 'Black']
+        };
+
+        let allEventTypes = [];
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        function init() {
+            loadFromStorage();
+            buildCategoryButtons();
+            buildEventButtons();
+            buildMatrix();
+            updateUI();
+            updateScoreboard();
+
+            // Show splash screen
+            showSplash();
+        }
+
+        function loadFromStorage() {
+            const saved = localStorage.getItem('matchEvents');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    events = data.events || [];
+                    currentPeriod = data.period || 'Not Started';
+                    team1Name = data.team1Name || 'Us';
+                    team2Name = data.team2Name || 'Opposition';
+                    gameName = data.gameName || 'Match';
+
+                    // Update labels
+                    document.getElementById('team1Label').textContent = team1Name;
+                    document.getElementById('team2Label').textContent = team2Name;
+                } catch (e) {
+                    console.log('Could not load saved data');
+                }
+            }
+
+            // Collect all unique event types
+            allEventTypes = [];
+            Object.values(eventTypes).forEach(types => {
+                types.forEach(type => {
+                    if (!allEventTypes.includes(type)) {
+                        allEventTypes.push(type);
+                    }
+                });
+            });
+        }
+
+        function saveToStorage() {
+            const data = {
+                events,
+                period: currentPeriod,
+                team1Name,
+                team2Name,
+                gameName,
+                lastModified: new Date().toISOString()
+            };
+            localStorage.setItem('matchEvents', JSON.stringify(data));
+        }
+
+        // ============================================
+        // UI BUILDING
+        // ============================================
+        function buildCategoryButtons() {
+            const grid = document.getElementById('categoryGrid');
+            grid.innerHTML = '';
+
+            Object.keys(categories).forEach(cat => {
+                ['OUR', 'OPP'].forEach(team => {
+                    const btn = document.createElement('button');
+                    btn.className = 'category-btn';
+                    btn.textContent = `${cat}\n(${team === 'OUR' ? team1Name : team2Name})`;
+                    btn.onclick = () => selectCategory(btn, cat, team);
+                    grid.appendChild(btn);
+                });
+            });
+        }
+
+        function buildEventButtons() {
+            const grid = document.getElementById('eventGrid');
+            grid.innerHTML = '';
+
+            // Get all unique event types
+            const uniqueTypes = new Set();
+            Object.values(eventTypes).forEach(types => {
+                types.forEach(type => uniqueTypes.add(type));
+            });
+
+            Array.from(uniqueTypes).sort().forEach(type => {
+                const btn = document.createElement('button');
+                btn.className = 'event-btn';
+                btn.textContent = type;
+                btn.disabled = true;
+                btn.onclick = () => toggleEvent(btn, type);
+                grid.appendChild(btn);
+            });
+        }
+
+        function buildMatrix() {
+            const table = document.getElementById('eventMatrix');
+            const thead = table.querySelector('thead tr');
+            const tbody = document.getElementById('matrixBody');
+
+            // Build header with all event types
+            thead.innerHTML = '<th class="category-header">Category</th>';
+            allEventTypes.forEach(type => {
+                const th = document.createElement('th');
+                th.textContent = type;
+                thead.appendChild(th);
+            });
+
+            // Build rows for each category
+            tbody.innerHTML = '';
+            Object.keys(categories).forEach(cat => {
+                ['OUR', 'OPP'].forEach(team => {
+                    const tr = document.createElement('tr');
+
+                    const catCell = document.createElement('td');
+                    catCell.className = 'category-cell';
+                    catCell.textContent = `${cat} (${team === 'OUR' ? team1Name : team2Name})`;
+                    tr.appendChild(catCell);
+
+                    allEventTypes.forEach(type => {
+                        const td = document.createElement('td');
+                        td.className = 'count-cell';
+                        td.textContent = '0';
+                        td.dataset.category = cat;
+                        td.dataset.team = team;
+                        td.dataset.type = type;
+                        td.onclick = () => showCellEvents(cat, team, type);
+                        tr.appendChild(td);
+                    });
+
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+
+        // ============================================
+        // EVENT HANDLING
+        // ============================================
+        function selectCategory(btn, category, team) {
+            // Auto-save if switching categories with pending events
+            if (currentCategory && selectedEvents.length > 0) {
+                saveEvent();
+            }
+
+            currentCategory = `${category}|${team}`;
+
+            // Update category button states
+            document.querySelectorAll('.category-btn').forEach(b => {
+                b.classList.remove('selected');
+            });
+            btn.classList.add('selected');
+
+            // Enable event buttons for this category
+            const validTypes = eventTypes[category] || [];
+            document.querySelectorAll('.event-btn').forEach(b => {
+                if (validTypes.includes(b.textContent)) {
+                    b.disabled = false;
+                } else {
+                    b.disabled = true;
+                    b.classList.remove('selected');
+                }
+            });
+
+            selectedEvents = [];
+            updateStatus();
+        }
+
+        function toggleEvent(btn, eventType) {
+            if (selectedEvents.includes(eventType)) {
+                selectedEvents = selectedEvents.filter(e => e !== eventType);
+                btn.classList.remove('selected');
+            } else {
+                selectedEvents.push(eventType);
+                btn.classList.add('selected');
+            }
+
+            updateStatus();
+
+            // Show/hide save button
+            document.getElementById('saveEventBtn').style.display =
+                selectedEvents.length > 0 ? 'block' : 'none';
+        }
+
+        function saveEvent() {
+            if (!currentCategory || selectedEvents.length === 0) {
+                return;
+            }
+
+            if (currentPeriod === 'Not Started') {
+                alert('Please start the game first!');
+                return;
+            }
+
+            const [category, team] = currentCategory.split('|');
+            const gameTime = formatTime(timerSeconds);
+
+            const event = {
+                timestamp: new Date().toISOString(),
+                time: gameTime,
+                period: currentPeriod,
+                category: category,
+                team: team,
+                teamName: team === 'OUR' ? team1Name : team2Name,
+                events: [...selectedEvents]
+            };
+
+            events.push(event);
+
+            // Clear selection
+            selectedEvents = [];
+            document.querySelectorAll('.event-btn').forEach(b => {
+                b.classList.remove('selected');
+            });
+            document.getElementById('saveEventBtn').style.display = 'none';
+
+            updateUI();
+            updateMatrix();
+            updateScoreboard();
+            updateRecentEvents();
+            saveToStorage();
+        }
+
+        // ============================================
+        // PERIOD MANAGEMENT
+        // ============================================
+        function setPeriod(btn, period) {
+            // Auto-save pending events
+            if (selectedEvents.length > 0) {
+                saveEvent();
+            }
+
+            currentPeriod = period;
+
+            document.querySelectorAll('.period-btn').forEach(b => {
+                b.classList.remove('active');
+            });
+            btn.classList.add('active');
+
+            // Timer management
+            if (period === '1st Half Started') {
+                startTimer(0);
+            } else if (period === '1st Half Ended') {
+                stopTimer();
+            } else if (period === '2nd Half Started') {
+                startTimer(1800); // 30:00
+            } else if (period === '2nd Half Ended') {
+                stopTimer();
+            }
+
+            updateUI();
+            saveToStorage();
+        }
+
+        // ============================================
+        // TIMER
+        // ============================================
+        function startTimer(startSeconds) {
+            stopTimer();
+            timerSeconds = startSeconds;
+            updateClockDisplay();
+
+            timerInterval = setInterval(() => {
+                timerSeconds++;
+                updateClockDisplay();
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function updateClockDisplay() {
+            document.getElementById('gameClock').textContent = formatTime(timerSeconds);
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        // ============================================
+        // UI UPDATES
+        // ============================================
+        function updateUI() {
+            document.getElementById('currentPeriod').textContent = currentPeriod;
+            document.getElementById('eventCount').textContent = events.length;
+        }
+
+        function updateStatus() {
+            const status = document.getElementById('status');
+            if (!currentCategory) {
+                status.textContent = 'Select an event category';
+            } else if (selectedEvents.length === 0) {
+                status.textContent = `Category: ${currentCategory} - Select event types`;
+            } else {
+                status.textContent = `Category: ${currentCategory} - Events: ${selectedEvents.join(', ')}`;
+            }
+        }
+
+        function updateScoreboard() {
+            let team1Goals = 0, team1Points = 0, team1TwoPointers = 0;
+            let team2Goals = 0, team2Points = 0, team2TwoPointers = 0;
+
+            events.forEach(event => {
+                if (event.category === 'Score') {
+                    const isTeam1 = event.team === 'OUR';
+
+                    if (event.events.includes('Goal')) {
+                        if (isTeam1) team1Goals++; else team2Goals++;
+                    }
+                    if (event.events.includes('Point')) {
+                        if (isTeam1) team1Points++; else team2Points++;
+                    }
+                    if (event.events.includes('2 Pointer')) {
+                        if (isTeam1) team1TwoPointers++; else team2TwoPointers++;
+                    }
+                }
+            });
+
+            // Calculate total points
+            const team1Total = (team1Goals * 3) + team1Points + (team1TwoPointers * 2);
+            const team2Total = (team2Goals * 3) + team2Points + (team2TwoPointers * 2);
+
+            document.getElementById('team1Score').textContent =
+                `${team1Goals}:${team1Points + (team1TwoPointers * 2)} (${team1Total})`;
+            document.getElementById('team2Score').textContent =
+                `${team2Goals}:${team2Points + (team2TwoPointers * 2)} (${team2Total})`;
+        }
+
+        function updateMatrix() {
+            // Reset all cells
+            document.querySelectorAll('.count-cell').forEach(cell => {
+                cell.textContent = '0';
+                cell.classList.remove('has-events');
+            });
+
+            // Count events
+            const counts = {};
+            events.forEach(event => {
+                event.events.forEach(type => {
+                    const key = `${event.category}|${event.team}|${type}`;
+                    counts[key] = (counts[key] || 0) + 1;
+                });
+            });
+
+            // Update cells
+            Object.keys(counts).forEach(key => {
+                const [category, team, type] = key.split('|');
+                const cell = document.querySelector(
+                    `.count-cell[data-category="${category}"][data-team="${team}"][data-type="${type}"]`
+                );
+                if (cell) {
+                    cell.textContent = counts[key];
+                    cell.classList.add('has-events');
+                }
+            });
+        }
+
+        function updateRecentEvents() {
+            const list = document.getElementById('recentEventsList');
+            const recent = events.slice(-10).reverse();
+
+            if (recent.length === 0) {
+                list.innerHTML = '<div class="no-recent-events">No events yet</div>';
+                return;
+            }
+
+            list.innerHTML = '';
+            recent.forEach((event, idx) => {
+                const actualIdx = events.length - idx - 1;
+                const item = document.createElement('div');
+                item.className = 'recent-event-item';
+
+                const info = document.createElement('div');
+                info.className = 'recent-event-info';
+
+                const time = document.createElement('span');
+                time.className = 'recent-event-time';
+                time.textContent = event.time;
+
+                const cat = document.createElement('span');
+                cat.className = 'recent-event-cat';
+                cat.textContent = `${event.category} (${event.teamName})`;
+
+                const desc = document.createElement('span');
+                desc.className = 'recent-event-desc';
+                desc.textContent = event.events.join(', ');
+
+                info.appendChild(time);
+                info.appendChild(cat);
+                info.appendChild(desc);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-event-btn';
+                deleteBtn.textContent = '×';
+                deleteBtn.onclick = () => deleteEvent(actualIdx);
+
+                item.appendChild(info);
+                item.appendChild(deleteBtn);
+                list.appendChild(item);
+            });
+        }
+
+        function deleteEvent(index) {
+            if (!confirm('Delete this event?')) return;
+
+            events.splice(index, 1);
+            updateUI();
+            updateMatrix();
+            updateScoreboard();
+            updateRecentEvents();
+            saveToStorage();
+        }
+
+        function showCellEvents(category, team, type) {
+            const matching = events.filter(e =>
+                e.category === category &&
+                e.team === team &&
+                e.events.includes(type)
+            );
+
+            if (matching.length === 0) {
+                alert('No events for this cell');
+                return;
+            }
+
+            const msg = matching.map(e =>
+                `${e.time} - ${e.period}: ${e.events.join(', ')}`
+            ).join('\n');
+
+            alert(`${category} (${team === 'OUR' ? team1Name : team2Name}) - ${type}\n\n${msg}`);
+        }
+
+        // ============================================
+        // SETTINGS
+        // ============================================
+        function openSettingsModal() {
+            document.getElementById('settingsModal').classList.add('active');
+            document.getElementById('team1Name').value = team1Name;
+            document.getElementById('team2Name').value = team2Name;
+            updateGameName();
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+
+        function updateGameName() {
+            const t1 = document.getElementById('team1Name').value || 'Team A';
+            const t2 = document.getElementById('team2Name').value || 'Team B';
+            gameName = `${t1} vs ${t2}`;
+            document.getElementById('gameNameDisplay').textContent = `Match: ${gameName}`;
+        }
+
+        function startNewGame() {
+            if (events.length > 0) {
+                if (!confirm('Start a new game? Current game data will be cleared.')) {
+                    return;
+                }
+            }
+
+            team1Name = document.getElementById('team1Name').value || 'Us';
+            team2Name = document.getElementById('team2Name').value || 'Opposition';
+            gameName = `${team1Name} vs ${team2Name}`;
+
+            // Reset game
+            events = [];
+            currentPeriod = 'Not Started';
+            currentCategory = '';
+            selectedEvents = [];
+            timerSeconds = 0;
+            stopTimer();
+
+            // Update UI
+            document.getElementById('team1Label').textContent = team1Name;
+            document.getElementById('team2Label').textContent = team2Name;
+
+            buildCategoryButtons();
+            updateUI();
+            updateMatrix();
+            updateScoreboard();
+            updateRecentEvents();
+            updateClockDisplay();
+
+            saveToStorage();
+            closeSettingsModal();
+        }
+
+        // ============================================
+        // TIMELINE
+        // ============================================
+        function openTimeline() {
+            if (events.length === 0) {
+                alert('No events to display!');
+                return;
+            }
+
+            const container = document.getElementById('timelineEvents');
+            container.innerHTML = '';
+
+            events.forEach(event => {
+                const div = document.createElement('div');
+                div.className = 'timeline-event';
+
+                const time = document.createElement('div');
+                time.className = 'timeline-event-time';
+                time.textContent = `${event.time} - ${event.period}`;
+
+                const details = document.createElement('div');
+                details.className = 'timeline-event-details';
+                details.textContent = `${event.category} (${event.teamName}): ${event.events.join(', ')}`;
+
+                div.appendChild(time);
+                div.appendChild(details);
+                container.appendChild(div);
+            });
+
+            document.getElementById('timelineModal').classList.add('active');
+        }
+
+        function closeTimeline() {
+            document.getElementById('timelineModal').classList.remove('active');
+        }
+
+        // ============================================
+        // EXPORT/IMPORT
+        // ============================================
+        function downloadCSV() {
+            if (events.length === 0) {
+                alert('No events to export!');
+                return;
+            }
+
+            let csv = 'Event#,Timestamp,Game Time,Period,Category,Team,Team Name,Events\n';
+
+            events.forEach((event, idx) => {
+                const row = [
+                    idx + 1,
+                    event.timestamp,
+                    event.time,
+                    event.period,
+                    event.category,
+                    event.team,
+                    event.teamName,
+                    `"${event.events.join(', ')}"`
+                ];
+                csv += row.join(',') + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `match-tagger-${gameName.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const lines = e.target.result.split('\n');
+                    const imported = [];
+
+                    for (let i = 1; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
+
+                        const parts = line.split(',');
+                        if (parts.length < 8) continue;
+
+                        const eventsStr = parts.slice(7).join(',').replace(/"/g, '');
+
+                        imported.push({
+                            timestamp: parts[1],
+                            time: parts[2],
+                            period: parts[3],
+                            category: parts[4],
+                            team: parts[5],
+                            teamName: parts[6],
+                            events: eventsStr.split(',').map(s => s.trim())
+                        });
+                    }
+
+                    if (imported.length > 0) {
+                        if (confirm(`Import ${imported.length} events? This will replace current data.`)) {
+                            events = imported;
+                            updateUI();
+                            updateMatrix();
+                            updateScoreboard();
+                            updateRecentEvents();
+                            saveToStorage();
+                            alert('Import successful!');
+                        }
+                    }
+                } catch (err) {
+                    alert('Error importing CSV: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // ============================================
+        // END GAME
+        // ============================================
+        function endGame() {
+            if (events.length === 0) {
+                alert('No game data to end!');
+                return;
+            }
+
+            if (!confirm('End the current game? Data will be saved and can be exported as CSV.')) {
+                return;
+            }
+
+            // Auto-download CSV
+            downloadCSV();
+
+            if (confirm('Clear game data and start fresh?')) {
+                events = [];
+                currentPeriod = 'Not Started';
+                currentCategory = '';
+                selectedEvents = [];
+                timerSeconds = 0;
+                stopTimer();
+
+                updateUI();
+                updateMatrix();
+                updateScoreboard();
+                updateRecentEvents();
+                updateClockDisplay();
+                saveToStorage();
+            }
+        }
+
+        // ============================================
+        // SPLASH SCREEN
+        // ============================================
+        function showSplash() {
+            const splash = document.getElementById('splashScreen');
+            splash.classList.add('show');
+
+            setTimeout(() => {
+                dismissSplash();
+            }, 3000);
+        }
+
+        function dismissSplash() {
+            const splash = document.getElementById('splashScreen');
+            splash.classList.add('fade-out');
+
+            setTimeout(() => {
+                splash.classList.remove('show', 'fade-out');
+            }, 300);
+        }
+
+        // ============================================
+        // PWA SUPPORT
+        // ============================================
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(() => {
+                    console.log('Service worker registration skipped');
+                });
+            });
+        }
+
+        // Initialize on load
+        window.addEventListener('load', init);
+
+        // Update recent events on init
+        setTimeout(() => {
+            updateRecentEvents();
+        }, 100);
+    </script>
+</body>
+</html>
