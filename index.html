@@ -86,75 +86,111 @@
             margin-bottom: 10px;
         }
 
-        .button-grid {
+        /* Video Player */
+        .video-container {
+            position: relative;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        #videoPlayer {
+            width: 100%;
+            display: block;
+        }
+
+        .video-controls {
             display: flex;
-            flex-wrap: wrap;
             gap: 8px;
+            align-items: center;
+            padding: 10px;
+            background: #333;
+            color: white;
         }
 
-        .button-grid button {
-            flex: 0 1 calc(25% - 8px);
-            min-width: 70px;
-            padding: 15px 8px;
-            font-size: 13px;
+        .video-time {
+            font-family: monospace;
+            font-size: 14px;
             font-weight: bold;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            background: white;
-            cursor: pointer;
+            min-width: 80px;
         }
 
-        .category-btn.selected {
+        .video-btn {
             background: #2196F3;
             color: white;
-            border-color: #2196F3;
-        }
-
-        .event-btn {
-            background: #fff3e0;
-            border-color: #ff9800;
-        }
-
-        .event-btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-
-        .event-btn.selected {
-            background: #ff9800;
-            color: white;
-        }
-
-        .period-btn {
-            flex: 1 1 calc(50% - 8px);
-            padding: 12px;
-            font-size: 13px;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
             font-weight: bold;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            background: white;
             cursor: pointer;
         }
 
-        .period-btn.active {
-            background: #4CAF50;
-            color: white;
+        .video-btn:hover {
+            background: #1976D2;
         }
 
-        .period-btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
+        .video-btn.secondary {
+            background: #666;
         }
 
-        #status {
-            text-align: center;
-            padding: 10px;
-            background: #e3f2fd;
+        .video-btn.secondary:hover {
+            background: #555;
+        }
+
+        .video-offset {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #fff3e0;
+            padding: 8px 12px;
             border-radius: 6px;
             margin-bottom: 10px;
             font-size: 13px;
         }
 
+        .video-offset input {
+            width: 70px;
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .video-offset label {
+            font-weight: bold;
+        }
+
+        /* Stats */
+        .stats {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .stat-box {
+            flex: 1;
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2196F3;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Controls */
         .controls {
             display: flex;
             gap: 8px;
@@ -186,96 +222,169 @@
             background: #ff9800;
         }
 
-        .stats {
+        /* Event Categories */
+        .category-tabs {
             display: flex;
             gap: 8px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
 
-        .stat-box {
+        .category-tab {
             flex: 1;
-            background: white;
-            padding: 10px;
-            border-radius: 6px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .stat-value {
-            font-size: 20px;
+            padding: 12px;
+            font-size: 14px;
             font-weight: bold;
-            color: #2196F3;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
         }
 
-        .stat-label {
-            font-size: 12px;
+        .category-tab.selected {
+            background: #2196F3;
+            color: white;
+            border-color: #2196F3;
+        }
+
+        .event-options {
+            display: none;
+        }
+
+        .event-options.active {
+            display: block;
+        }
+
+        .option-group {
+            margin-bottom: 15px;
+        }
+
+        .option-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-weight: bold;
             color: #666;
         }
 
-        /* Matrix styles */
-        .matrix-container {
-            overflow: auto;
-            margin-top: 15px;
-            max-height: 400px;
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
         }
 
-        .matrix-table {
-            border-collapse: collapse;
-            width: 100%;
-            font-size: 11px;
-        }
-
-        .matrix-table th,
-        .matrix-table td {
-            border: 1px solid #ddd;
-            padding: 6px;
-            text-align: center;
-            min-width: 50px;
-        }
-
-        .matrix-table th {
-            background-color: #2196F3;
-            color: white;
+        .option-btn {
+            flex: 0 1 calc(33.333% - 6px);
+            padding: 10px 8px;
+            font-size: 13px;
             font-weight: bold;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .matrix-table th.category-header {
-            background-color: #1976D2;
-            text-align: left;
-            position: sticky;
-            left: 0;
-            z-index: 11;
-        }
-
-        .matrix-table td.category-cell {
-            background-color: #f5f5f5;
-            font-weight: bold;
-            text-align: left;
-            position: sticky;
-            left: 0;
-            z-index: 5;
-            font-size: 11px;
-        }
-
-        .matrix-table td.count-cell {
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            background: white;
             cursor: pointer;
-            transition: background-color 0.2s;
         }
 
-        .matrix-table td.count-cell:hover {
-            background-color: #e3f2fd;
+        .option-btn.selected {
+            background: #ff9800;
+            color: white;
+            border-color: #ff9800;
         }
 
-        .matrix-table td.count-cell.has-events {
-            background-color: #c8e6c9;
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .tag-event-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
             font-weight: bold;
-            color: #2e7d32;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 15px;
         }
 
-        /* Modal styles */
+        .tag-event-btn:hover {
+            background: #45a049;
+        }
+
+        .tag-event-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Events List */
+        .events-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .event-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .event-info {
+            flex: 1;
+        }
+
+        .event-time {
+            font-weight: bold;
+            color: #2196F3;
+            margin-bottom: 4px;
+        }
+
+        .event-details {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .event-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .event-action-btn {
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .edit-btn {
+            background: #2196F3;
+            color: white;
+        }
+
+        .delete-btn {
+            background: #f44336;
+            color: white;
+        }
+
+        .no-events {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -297,7 +406,7 @@
             background: white;
             padding: 20px;
             border-radius: 8px;
-            max-width: 450px;
+            max-width: 500px;
             width: 90%;
             max-height: 90vh;
             overflow-y: auto;
@@ -356,19 +465,10 @@
             font-size: 14px;
         }
 
-        .game-name-display {
-            background: #e3f2fd;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            font-size: 14px;
-            text-align: center;
-            font-weight: bold;
-        }
-
         .modal-buttons {
             display: flex;
             gap: 8px;
+            margin-top: 20px;
         }
 
         .modal-btn {
@@ -390,189 +490,28 @@
             background: #999;
         }
 
-        .recent-events {
-            background: white;
-            padding: 10px;
+        .video-upload {
+            border: 2px dashed #ddd;
+            padding: 20px;
+            text-align: center;
             border-radius: 8px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .recent-events h3 {
-            font-size: 14px;
-            margin: 0 0 10px 0;
-            color: #666;
-        }
-
-        .recent-events-list {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            max-height: 180px;
-            overflow-y: auto;
-        }
-
-        .recent-event-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 10px;
-            background: #f5f5f5;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-
-        .recent-event-info {
-            flex: 1;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .recent-event-time {
-            font-weight: bold;
-            color: #2196F3;
-            min-width: 45px;
-        }
-
-        .recent-event-cat {
-            font-weight: bold;
-            min-width: 80px;
-        }
-
-        .recent-event-desc {
-            color: #666;
-        }
-
-        .delete-event-btn {
-            background: #f44336;
-            color: white;
-            border: none;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 16px;
-            font-weight: bold;
             cursor: pointer;
-            line-height: 1;
-            min-width: 28px;
+            margin-bottom: 15px;
         }
 
-        .delete-event-btn:hover {
-            background: #d32f2f;
-        }
-
-        .no-recent-events {
-            text-align: center;
-            padding: 15px;
-            color: #999;
-            font-size: 12px;
-        }
-
-        .timeline-modal {
-            max-width: 95%;
-            max-height: 95vh;
-            width: 1200px;
-        }
-
-        .timeline-events {
-            max-height: 70vh;
-            overflow-y: auto;
-        }
-
-        .timeline-event {
-            padding: 12px;
-            margin-bottom: 10px;
+        .video-upload:hover {
+            border-color: #2196F3;
             background: #f5f5f5;
-            border-left: 4px solid #2196F3;
-            border-radius: 4px;
-            font-size: 13px;
         }
 
-        .timeline-event-time {
-            font-weight: bold;
-            color: #2196F3;
-            margin-bottom: 4px;
-        }
-
-        .timeline-event-details {
-            color: #666;
-        }
-
-        /* Splash Screen */
-        .splash-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 99999;
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out;
-        }
-
-        .splash-screen.show {
-            display: flex;
-            opacity: 1;
-        }
-
-        .splash-screen.fade-out {
-            opacity: 0;
-        }
-
-        .splash-content {
-            text-align: center;
-            animation: fadeInUp 0.5s ease-out;
-        }
-
-        .splash-logo {
-            width: 150px;
-            height: 150px;
-            border-radius: 30px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            margin-bottom: 20px;
-        }
-
-        .splash-title {
-            color: white;
-            font-size: 32px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        .splash-subtitle {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 16px;
-            margin-bottom: 30px;
-        }
-
-        .splash-hint {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 14px;
-            position: absolute;
-            bottom: 40px;
-            left: 0;
-            right: 0;
-            text-align: center;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .video-upload.has-video {
+            border-color: #4CAF50;
+            background: #e8f5e9;
         }
 
         @media (max-width: 768px) {
-            .button-grid button {
-                flex: 0 1 calc(50% - 8px);
+            .option-btn {
+                flex: 0 1 calc(50% - 6px);
             }
             .control-btn {
                 flex: 1 1 calc(50% - 8px);
@@ -581,105 +520,194 @@
     </style>
 </head>
 <body>
-    <!-- Splash Screen -->
-    <div id="splashScreen" class="splash-screen" onclick="dismissSplash()">
-        <div class="splash-content">
-            <img src="./icons/icon-192x192.png" alt="Match Tagger Logo" class="splash-logo" onerror="this.style.display='none'">
-            <div class="splash-title">Match Tagger</div>
-            <div class="splash-subtitle">Track Match Flow & Team Events</div>
-        </div>
-        <div class="splash-hint">Tap anywhere to continue</div>
-    </div>
-
     <div class="header">
         <button onclick="openSettingsModal()" class="header-btn left">
             ⚙️ Settings
         </button>
-        <h1>Match Tagger <span class="version">v1.0</span></h1>
+        <h1>Match Tagger <span class="version">v2.0</span></h1>
     </div>
 
-    <div id="status">Ready - Select an event category</div>
+    <!-- Video Player Section -->
+    <div class="section">
+        <h2>Video Player</h2>
+        <div class="video-container">
+            <video id="videoPlayer" controls></video>
+        </div>
+        <div class="video-controls">
+            <button class="video-btn" onclick="document.getElementById('videoFileInput').click()">
+                📁 Load Video
+            </button>
+            <button class="video-btn" onclick="togglePlayPause()">⏯ Play/Pause</button>
+            <button class="video-btn secondary" onclick="skipBackward()">⏪ -5s</button>
+            <button class="video-btn secondary" onclick="skipForward()">⏩ +5s</button>
+            <span class="video-time" id="videoTime">00:00 / 00:00</span>
+        </div>
+        <div class="video-offset">
+            <label>Game Start Offset:</label>
+            <input type="text" id="offsetInput" placeholder="00:00" value="00:00" onchange="updateOffset()">
+            <span style="color: #666; font-size: 12px;">(Video time when game starts)</span>
+        </div>
+        <input type="file" id="videoFileInput" accept="video/*" style="display: none;" onchange="loadVideo(event)">
+    </div>
 
+    <!-- Stats -->
     <div class="stats">
         <div class="stat-box">
             <div class="stat-value" id="team1Score">0:0</div>
             <div class="stat-label" id="team1Label">Us</div>
         </div>
         <div class="stat-box">
-            <div class="stat-value" id="gameClock">00:00</div>
-            <div class="stat-label">Game Clock</div>
+            <div class="stat-value" id="eventCount">0</div>
+            <div class="stat-label">Events Tagged</div>
         </div>
         <div class="stat-box">
             <div class="stat-value" id="team2Score">0:0</div>
             <div class="stat-label" id="team2Label">Opposition</div>
         </div>
     </div>
-    <div class="stats">
-        <div class="stat-box">
-            <div class="stat-value" id="currentPeriod">Not Started</div>
-            <div class="stat-label">Period</div>
-        </div>
-        <div class="stat-box">
-            <div class="stat-value" id="eventCount">0</div>
-            <div class="stat-label">Events</div>
-        </div>
-    </div>
 
+    <!-- Controls -->
     <div class="controls">
         <button class="control-btn primary" onclick="downloadCSV()">Download CSV</button>
         <button class="control-btn primary" onclick="document.getElementById('csvImport').click()">Import CSV</button>
-        <button class="control-btn warning" onclick="openTimeline()">Timeline</button>
-        <button class="control-btn danger" onclick="endGame()">End Game</button>
+        <button class="control-btn danger" onclick="clearAllEvents()">Clear All</button>
     </div>
 
     <input type="file" id="csvImport" accept=".csv" style="display: none;" onchange="importCSV(event)">
 
+    <!-- Event Tagging Section -->
     <div class="section">
-        <h2>Game Period</h2>
-        <div class="button-grid">
-            <button class="period-btn" onclick="setPeriod(this, '1st Half Started')">Start 1st Half</button>
-            <button class="period-btn" onclick="setPeriod(this, '1st Half Ended')">End 1st Half</button>
-            <button class="period-btn" onclick="setPeriod(this, '2nd Half Started')">Start 2nd Half</button>
-            <button class="period-btn" onclick="setPeriod(this, '2nd Half Ended')">End 2nd Half</button>
+        <h2>Tag Event</h2>
+
+        <!-- Category Tabs -->
+        <div class="category-tabs">
+            <button class="category-tab" onclick="selectCategory('Kickouts')">Kickouts</button>
+            <button class="category-tab" onclick="selectCategory('Turnovers')">Turnovers</button>
+            <button class="category-tab" onclick="selectCategory('Shooting')">Shooting</button>
         </div>
-    </div>
 
-    <div class="section">
-        <h2>Event Categories</h2>
-        <div class="button-grid" id="categoryGrid"></div>
-    </div>
-
-    <div class="section">
-        <h2>Event Types</h2>
-        <div class="button-grid" id="eventGrid"></div>
-    </div>
-
-    <div class="controls">
-        <button class="control-btn primary" onclick="saveEvent()" id="saveEventBtn" style="display: none;">💾 Save Event</button>
-    </div>
-
-    <div class="section">
-        <h2>Event Matrix</h2>
-        <p style="font-size: 12px; color: #666; margin-bottom: 10px;">
-            Count of events for each category-event combination
-        </p>
-        <div class="matrix-container">
-            <table class="matrix-table" id="eventMatrix">
-                <thead>
-                    <tr>
-                        <th class="category-header">Category</th>
-                    </tr>
-                </thead>
-                <tbody id="matrixBody">
-                </tbody>
-            </table>
+        <!-- Kickouts Options -->
+        <div id="kickoutsOptions" class="event-options">
+            <div class="option-group">
+                <label>Team</label>
+                <div class="button-group">
+                    <button class="option-btn" data-field="team" data-value="OUR" onclick="selectOption(this)">Us</button>
+                    <button class="option-btn" data-field="team" data-value="OPP" onclick="selectOption(this)">Opposition</button>
+                </div>
+            </div>
+            <div class="option-group">
+                <label>Kickout Type</label>
+                <div class="button-group">
+                    <button class="option-btn" data-field="kickoutType" data-value="Short" onclick="selectOption(this)">Short</button>
+                    <button class="option-btn" data-field="kickoutType" data-value="Long" onclick="selectOption(this)">Long</button>
+                    <button class="option-btn" data-field="kickoutType" data-value="Medium" onclick="selectOption(this)">Medium</button>
+                </div>
+            </div>
+            <div class="option-group">
+                <label>Kickout Result</label>
+                <div class="button-group">
+                    <button class="option-btn" data-field="kickoutResult" data-value="Won" onclick="selectOption(this)">Won</button>
+                    <button class="option-btn" data-field="kickoutResult" data-value="Lost" onclick="selectOption(this)">Lost</button>
+                    <button class="option-btn" data-field="kickoutResult" data-value="Breaking Ball" onclick="selectOption(this)">Breaking Ball</button>
+                    <button class="option-btn" data-field="kickoutResult" data-value="Contested" onclick="selectOption(this)">Contested</button>
+                </div>
+            </div>
+            <div class="option-group">
+                <label>Kickout Location</label>
+                <div class="button-group">
+                    <button class="option-btn" data-field="kickoutLocation" data-value="Left" onclick="selectOption(this)">Left</button>
+                    <button class="option-btn" data-field="kickoutLocation" data-value="Center" onclick="selectOption(this)">Center</button>
+                    <button class="option-btn" data-field="kickoutLocation" data-value="Right" onclick="selectOption(this)">Right</button>
+                </div>
+            </div>
+            <div class="option-group">
+                <label>Mark Taken</label>
+                <div class="button-group">
+                    <button class="option-btn" data-field="markTaken" data-value="Yes" onclick="selectOption(this)">Yes</button>
+                    <button class="option-btn" data-field="markTaken" data-value="No" onclick="selectOption(this)">No</button>
+                </div>
+            </div>
         </div>
+
+        <!-- Turnovers Options -->
+        <div id="turnoversOptions" class="event-options">
+            <div class="option-group">
+                <label>Team</label>
+                <div class="button-group">
+                    <button class="option-btn" data-field="team" data-value="OUR" onclick="selectOption(this)">Us</button>
+                    <button class="option-btn" data-field="team" data-value="OPP" onclick="selectOption(this)">Opposition</button>
+                </div>
+            </div>
+            <div class="option-group">
+                <label>Turnover Type</label>
+                <div class="button-group">
+                    <button class="option-btn" data-field="turnoverType" data-value="Forced" onclick="selectOption(this)">Forced</button>
+                    <button class="option-btn" data-field="turnoverType" data-value="Unforced" onclick="selectOption(this)">Unforced</button>
+                    <button class="option-btn" data-field="turnoverType" data-value="Interception" onclick="selectOption(this)">Interception</button>
+                    <button class="option-btn" data-field="turnoverType" data-value="Tackle" onclick="selectOption(this)">Tackle</button>
+                    <button class="option-btn" data-field="turnoverType" data-value="Dispossessed" onclick="selectOption(this)">Dispossessed</button>
+                    <button class="option-btn" data-field="turnoverType" data-value="Block Down" onclick="selectOption(this)">Block Down</button>
+                </div>
+            </div>
+            <div class="option-group">
+                <label>Turnover Location</label>
+                <div class="button-group">
+                    <button class="option-btn" data-field="turnoverLocation" data-value="Defensive Third" onclick="selectOption(this)">Defensive Third</button>
+                    <button class="option-btn" data-field="turnoverLocation" data-value="Middle Third" onclick="selectOption(this)">Middle Third</button>
+                    <button class="option-btn" data-field="turnoverLocation" data-value="Attacking Third" onclick="selectOption(this)">Attacking Third</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shooting Options -->
+        <div id="shootingOptions" class="event-options">
+            <div class="option-group">
+                <label>Team</label>
+                <div class="button-group">
+                    <button class="option-btn" data-field="team" data-value="OUR" onclick="selectOption(this)">Us</button>
+                    <button class="option-btn" data-field="team" data-value="OPP" onclick="selectOption(this)">Opposition</button>
+                </div>
+            </div>
+            <div class="option-group">
+                <label>Shot Type</label>
+                <div class="button-group">
+                    <button class="option-btn" data-field="shotType" data-value="Free" onclick="selectOption(this)">Free</button>
+                    <button class="option-btn" data-field="shotType" data-value="Play" onclick="selectOption(this)">Play</button>
+                    <button class="option-btn" data-field="shotType" data-value="45" onclick="selectOption(this)">45</button>
+                    <button class="option-btn" data-field="shotType" data-value="Penalty" onclick="selectOption(this)">Penalty</button>
+                </div>
+            </div>
+            <div class="option-group">
+                <label>Shot Location</label>
+                <div class="button-group">
+                    <button class="option-btn" data-field="shotLocation" data-value="Inside 21m" onclick="selectOption(this)">Inside 21m</button>
+                    <button class="option-btn" data-field="shotLocation" data-value="21-45m" onclick="selectOption(this)">21-45m</button>
+                    <button class="option-btn" data-field="shotLocation" data-value="Beyond 45m" onclick="selectOption(this)">Beyond 45m</button>
+                </div>
+            </div>
+            <div class="option-group">
+                <label>Shot Outcome</label>
+                <div class="button-group">
+                    <button class="option-btn" data-field="shotOutcome" data-value="Goal" onclick="selectOption(this)">Goal</button>
+                    <button class="option-btn" data-field="shotOutcome" data-value="Point" onclick="selectOption(this)">Point</button>
+                    <button class="option-btn" data-field="shotOutcome" data-value="Wide" onclick="selectOption(this)">Wide</button>
+                    <button class="option-btn" data-field="shotOutcome" data-value="Short" onclick="selectOption(this)">Short</button>
+                    <button class="option-btn" data-field="shotOutcome" data-value="Saved" onclick="selectOption(this)">Saved</button>
+                    <button class="option-btn" data-field="shotOutcome" data-value="Blocked" onclick="selectOption(this)">Blocked</button>
+                </div>
+            </div>
+        </div>
+
+        <button class="tag-event-btn" onclick="tagEvent()" id="tagEventBtn">
+            📌 Tag Event at Current Time
+        </button>
     </div>
 
-    <div class="recent-events">
-        <h3>Recent Events</h3>
-        <div class="recent-events-list" id="recentEventsList">
-            <div class="no-recent-events">No events yet</div>
+    <!-- Events List -->
+    <div class="section">
+        <h2>Tagged Events (<span id="eventListCount">0</span>)</h2>
+        <div class="events-list" id="eventsList">
+            <div class="no-events">No events tagged yet. Load a video and start tagging!</div>
         </div>
     </div>
 
@@ -691,33 +719,42 @@
                 <button class="modal-close" onclick="closeSettingsModal()">&times;</button>
             </div>
 
-            <div class="game-name-display" id="gameNameDisplay">Match: Team A vs Team B</div>
-
             <div class="form-group">
                 <label for="team1Name">Our Team Name</label>
-                <input type="text" id="team1Name" placeholder="Our Team" oninput="updateGameName()">
+                <input type="text" id="team1Name" placeholder="Our Team" value="Us">
             </div>
 
             <div class="form-group">
                 <label for="team2Name">Opposition Team Name</label>
-                <input type="text" id="team2Name" placeholder="Opposition" oninput="updateGameName()">
+                <input type="text" id="team2Name" placeholder="Opposition" value="Opposition">
             </div>
 
             <div class="modal-buttons">
-                <button class="modal-btn primary" onclick="startNewGame()">Start New Game</button>
+                <button class="modal-btn primary" onclick="saveSettings()">Save</button>
                 <button class="modal-btn secondary" onclick="closeSettingsModal()">Cancel</button>
             </div>
         </div>
     </div>
 
-    <!-- Timeline Modal -->
-    <div id="timelineModal" class="modal">
-        <div class="modal-content timeline-modal">
+    <!-- Edit Event Modal -->
+    <div id="editEventModal" class="modal">
+        <div class="modal-content">
             <div class="modal-header">
-                <h2>📊 Match Timeline</h2>
-                <button class="modal-close" onclick="closeTimeline()">&times;</button>
+                <h2>✏️ Edit Event</h2>
+                <button class="modal-close" onclick="closeEditModal()">&times;</button>
             </div>
-            <div class="timeline-events" id="timelineEvents"></div>
+
+            <div class="form-group">
+                <label for="editTime">Game Time (MM:SS)</label>
+                <input type="text" id="editTime" placeholder="00:00">
+            </div>
+
+            <div id="editOptionsContainer"></div>
+
+            <div class="modal-buttons">
+                <button class="modal-btn primary" onclick="saveEditedEvent()">Save Changes</button>
+                <button class="modal-btn secondary" onclick="closeEditModal()">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -726,56 +763,37 @@
         // STATE MANAGEMENT
         // ============================================
         let events = [];
-        let currentPeriod = 'Not Started';
         let currentCategory = '';
-        let selectedEvents = [];
-        let timerInterval = null;
-        let timerSeconds = 0;
+        let currentEvent = {};
         let team1Name = 'Us';
         let team2Name = 'Opposition';
-        let gameName = 'Match';
+        let videoOffset = 0; // seconds
+        let editingIndex = -1;
 
-        // Event categories for team-level tracking
-        const categories = {
-            'Possession': ['OUR', 'OPP'],
-            'Attack Phase': ['OUR', 'OPP'],
-            'Defense Phase': ['OUR', 'OPP'],
-            'Turnover': ['OUR', 'OPP'],
-            'Set Piece': ['OUR', 'OPP'],
-            'Score Attempt': ['OUR', 'OPP'],
-            'Score': ['OUR', 'OPP'],
-            'Foul': ['OUR', 'OPP'],
-            'Card': ['OUR', 'OPP']
-        };
-
-        // Event types for each category
-        const eventTypes = {
-            'Possession': ['Won', 'Lost', 'Long', 'Short', 'From Kickout', 'From Turnover'],
-            'Attack Phase': ['Build-up', 'Fast Break', 'Counter', 'Sustained', 'Inside 50'],
-            'Defense Phase': ['Structured', 'Press High', 'Drop Deep', 'Force Wide', 'Turnover Won'],
-            'Turnover': ['Forced', 'Unforced', 'Interception', 'Tackle', 'Block Down'],
-            'Set Piece': ['Kickout', 'Free Kick', 'Sideline', '45', 'Penalty'],
-            'Score Attempt': ['Shot', 'Goal Attempt', 'Point Attempt', 'Inside 21', 'Outside 45'],
-            'Score': ['Goal', 'Point', '2 Pointer', 'Free', 'Play'],
-            'Foul': ['Technical', 'Aggressive', 'Advantage', 'Free Against'],
-            'Card': ['Yellow', 'Red', 'Black']
-        };
-
-        let allEventTypes = [];
+        const video = document.getElementById('videoPlayer');
 
         // ============================================
         // INITIALIZATION
         // ============================================
         function init() {
             loadFromStorage();
-            buildCategoryButtons();
-            buildEventButtons();
-            buildMatrix();
             updateUI();
             updateScoreboard();
+            updateEventsList();
 
-            // Show splash screen
-            showSplash();
+            // Video event listeners
+            video.addEventListener('timeupdate', updateVideoTime);
+            video.addEventListener('loadedmetadata', () => {
+                updateVideoTime();
+            });
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+                    e.preventDefault();
+                    togglePlayPause();
+                }
+            });
         }
 
         function loadFromStorage() {
@@ -784,388 +802,229 @@
                 try {
                     const data = JSON.parse(saved);
                     events = data.events || [];
-                    currentPeriod = data.period || 'Not Started';
                     team1Name = data.team1Name || 'Us';
                     team2Name = data.team2Name || 'Opposition';
-                    gameName = data.gameName || 'Match';
+                    videoOffset = data.videoOffset || 0;
 
-                    // Update labels
+                    document.getElementById('team1Name').value = team1Name;
+                    document.getElementById('team2Name').value = team2Name;
+                    document.getElementById('offsetInput').value = formatTime(videoOffset);
                     document.getElementById('team1Label').textContent = team1Name;
                     document.getElementById('team2Label').textContent = team2Name;
                 } catch (e) {
                     console.log('Could not load saved data');
                 }
             }
-
-            // Collect all unique event types
-            allEventTypes = [];
-            Object.values(eventTypes).forEach(types => {
-                types.forEach(type => {
-                    if (!allEventTypes.includes(type)) {
-                        allEventTypes.push(type);
-                    }
-                });
-            });
         }
 
         function saveToStorage() {
             const data = {
                 events,
-                period: currentPeriod,
                 team1Name,
                 team2Name,
-                gameName,
+                videoOffset,
                 lastModified: new Date().toISOString()
             };
             localStorage.setItem('matchEvents', JSON.stringify(data));
         }
 
         // ============================================
-        // UI BUILDING
+        // VIDEO PLAYER
         // ============================================
-        function buildCategoryButtons() {
-            const grid = document.getElementById('categoryGrid');
-            grid.innerHTML = '';
+        function loadVideo(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-            Object.keys(categories).forEach(cat => {
-                ['OUR', 'OPP'].forEach(team => {
-                    const btn = document.createElement('button');
-                    btn.className = 'category-btn';
-                    btn.textContent = `${cat}\n(${team === 'OUR' ? team1Name : team2Name})`;
-                    btn.onclick = () => selectCategory(btn, cat, team);
-                    grid.appendChild(btn);
-                });
-            });
+            const url = URL.createObjectURL(file);
+            video.src = url;
+            video.load();
         }
 
-        function buildEventButtons() {
-            const grid = document.getElementById('eventGrid');
-            grid.innerHTML = '';
-
-            // Get all unique event types
-            const uniqueTypes = new Set();
-            Object.values(eventTypes).forEach(types => {
-                types.forEach(type => uniqueTypes.add(type));
-            });
-
-            Array.from(uniqueTypes).sort().forEach(type => {
-                const btn = document.createElement('button');
-                btn.className = 'event-btn';
-                btn.textContent = type;
-                btn.disabled = true;
-                btn.onclick = () => toggleEvent(btn, type);
-                grid.appendChild(btn);
-            });
-        }
-
-        function buildMatrix() {
-            const table = document.getElementById('eventMatrix');
-            const thead = table.querySelector('thead tr');
-            const tbody = document.getElementById('matrixBody');
-
-            // Build header with all event types
-            thead.innerHTML = '<th class="category-header">Category</th>';
-            allEventTypes.forEach(type => {
-                const th = document.createElement('th');
-                th.textContent = type;
-                thead.appendChild(th);
-            });
-
-            // Build rows for each category
-            tbody.innerHTML = '';
-            Object.keys(categories).forEach(cat => {
-                ['OUR', 'OPP'].forEach(team => {
-                    const tr = document.createElement('tr');
-
-                    const catCell = document.createElement('td');
-                    catCell.className = 'category-cell';
-                    catCell.textContent = `${cat} (${team === 'OUR' ? team1Name : team2Name})`;
-                    tr.appendChild(catCell);
-
-                    allEventTypes.forEach(type => {
-                        const td = document.createElement('td');
-                        td.className = 'count-cell';
-                        td.textContent = '0';
-                        td.dataset.category = cat;
-                        td.dataset.team = team;
-                        td.dataset.type = type;
-                        td.onclick = () => showCellEvents(cat, team, type);
-                        tr.appendChild(td);
-                    });
-
-                    tbody.appendChild(tr);
-                });
-            });
-        }
-
-        // ============================================
-        // EVENT HANDLING
-        // ============================================
-        function selectCategory(btn, category, team) {
-            // Auto-save if switching categories with pending events
-            if (currentCategory && selectedEvents.length > 0) {
-                saveEvent();
-            }
-
-            currentCategory = `${category}|${team}`;
-
-            // Update category button states
-            document.querySelectorAll('.category-btn').forEach(b => {
-                b.classList.remove('selected');
-            });
-            btn.classList.add('selected');
-
-            // Enable event buttons for this category
-            const validTypes = eventTypes[category] || [];
-            document.querySelectorAll('.event-btn').forEach(b => {
-                if (validTypes.includes(b.textContent)) {
-                    b.disabled = false;
-                } else {
-                    b.disabled = true;
-                    b.classList.remove('selected');
-                }
-            });
-
-            selectedEvents = [];
-            updateStatus();
-        }
-
-        function toggleEvent(btn, eventType) {
-            if (selectedEvents.includes(eventType)) {
-                selectedEvents = selectedEvents.filter(e => e !== eventType);
-                btn.classList.remove('selected');
+        function togglePlayPause() {
+            if (video.paused) {
+                video.play();
             } else {
-                selectedEvents.push(eventType);
-                btn.classList.add('selected');
+                video.pause();
             }
-
-            updateStatus();
-
-            // Show/hide save button
-            document.getElementById('saveEventBtn').style.display =
-                selectedEvents.length > 0 ? 'block' : 'none';
         }
 
-        function saveEvent() {
-            if (!currentCategory || selectedEvents.length === 0) {
+        function skipBackward() {
+            video.currentTime = Math.max(0, video.currentTime - 5);
+        }
+
+        function skipForward() {
+            video.currentTime = Math.min(video.duration, video.currentTime + 5);
+        }
+
+        function updateVideoTime() {
+            const current = formatTime(Math.floor(video.currentTime));
+            const duration = formatTime(Math.floor(video.duration || 0));
+            document.getElementById('videoTime').textContent = `${current} / ${duration}`;
+        }
+
+        function updateOffset() {
+            const input = document.getElementById('offsetInput').value;
+            videoOffset = parseTimeToSeconds(input);
+            saveToStorage();
+        }
+
+        function getGameTime() {
+            return Math.max(0, Math.floor(video.currentTime) - videoOffset);
+        }
+
+        // ============================================
+        // CATEGORY SELECTION
+        // ============================================
+        function selectCategory(category) {
+            currentCategory = category;
+            currentEvent = { category };
+
+            // Update tab styles
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+
+            // Show/hide option panels
+            document.querySelectorAll('.event-options').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            document.getElementById(`${category.toLowerCase()}Options`).classList.add('active');
+
+            // Clear selections
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+
+            updateTagButton();
+        }
+
+        // ============================================
+        // OPTION SELECTION
+        // ============================================
+        function selectOption(btn) {
+            const field = btn.dataset.field;
+            const value = btn.dataset.value;
+
+            // Clear other selections in the same field
+            const siblings = btn.parentElement.querySelectorAll('.option-btn');
+            siblings.forEach(s => s.classList.remove('selected'));
+
+            btn.classList.add('selected');
+            currentEvent[field] = value;
+
+            updateTagButton();
+        }
+
+        function updateTagButton() {
+            const btn = document.getElementById('tagEventBtn');
+            const isValid = currentCategory && currentEvent.team;
+            btn.disabled = !isValid;
+
+            if (isValid && video.currentTime > 0) {
+                const gameTime = formatTime(getGameTime());
+                btn.textContent = `📌 Tag Event at ${gameTime}`;
+            } else {
+                btn.textContent = '📌 Tag Event at Current Time';
+            }
+        }
+
+        // ============================================
+        // TAG EVENT
+        // ============================================
+        function tagEvent() {
+            if (!currentCategory || !currentEvent.team) {
+                alert('Please select a category and team!');
                 return;
             }
 
-            if (currentPeriod === 'Not Started') {
-                alert('Please start the game first!');
+            if (video.currentTime === 0 && !video.duration) {
+                alert('Please load a video first!');
                 return;
             }
 
-            const [category, team] = currentCategory.split('|');
-            const gameTime = formatTime(timerSeconds);
-
+            const gameTime = getGameTime();
             const event = {
+                ...currentEvent,
+                videoTime: Math.floor(video.currentTime),
+                gameTime: gameTime,
+                gameTimeFormatted: formatTime(gameTime),
                 timestamp: new Date().toISOString(),
-                time: gameTime,
-                period: currentPeriod,
-                category: category,
-                team: team,
-                teamName: team === 'OUR' ? team1Name : team2Name,
-                events: [...selectedEvents]
+                teamName: currentEvent.team === 'OUR' ? team1Name : team2Name
             };
 
             events.push(event);
+            events.sort((a, b) => a.gameTime - b.gameTime);
 
-            // Clear selection
-            selectedEvents = [];
-            document.querySelectorAll('.event-btn').forEach(b => {
-                b.classList.remove('selected');
+            // Clear selections
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.classList.remove('selected');
             });
-            document.getElementById('saveEventBtn').style.display = 'none';
+            currentEvent = { category: currentCategory };
 
             updateUI();
-            updateMatrix();
             updateScoreboard();
-            updateRecentEvents();
+            updateEventsList();
             saveToStorage();
         }
 
         // ============================================
-        // PERIOD MANAGEMENT
+        // EVENTS LIST
         // ============================================
-        function setPeriod(btn, period) {
-            // Auto-save pending events
-            if (selectedEvents.length > 0) {
-                saveEvent();
-            }
+        function updateEventsList() {
+            const list = document.getElementById('eventsList');
+            const count = document.getElementById('eventListCount');
 
-            currentPeriod = period;
+            count.textContent = events.length;
 
-            document.querySelectorAll('.period-btn').forEach(b => {
-                b.classList.remove('active');
-            });
-            btn.classList.add('active');
-
-            // Timer management
-            if (period === '1st Half Started') {
-                startTimer(0);
-            } else if (period === '1st Half Ended') {
-                stopTimer();
-            } else if (period === '2nd Half Started') {
-                startTimer(1800); // 30:00
-            } else if (period === '2nd Half Ended') {
-                stopTimer();
-            }
-
-            updateUI();
-            saveToStorage();
-        }
-
-        // ============================================
-        // TIMER
-        // ============================================
-        function startTimer(startSeconds) {
-            stopTimer();
-            timerSeconds = startSeconds;
-            updateClockDisplay();
-
-            timerInterval = setInterval(() => {
-                timerSeconds++;
-                updateClockDisplay();
-            }, 1000);
-        }
-
-        function stopTimer() {
-            if (timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-            }
-        }
-
-        function updateClockDisplay() {
-            document.getElementById('gameClock').textContent = formatTime(timerSeconds);
-        }
-
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-        }
-
-        // ============================================
-        // UI UPDATES
-        // ============================================
-        function updateUI() {
-            document.getElementById('currentPeriod').textContent = currentPeriod;
-            document.getElementById('eventCount').textContent = events.length;
-        }
-
-        function updateStatus() {
-            const status = document.getElementById('status');
-            if (!currentCategory) {
-                status.textContent = 'Select an event category';
-            } else if (selectedEvents.length === 0) {
-                status.textContent = `Category: ${currentCategory} - Select event types`;
-            } else {
-                status.textContent = `Category: ${currentCategory} - Events: ${selectedEvents.join(', ')}`;
-            }
-        }
-
-        function updateScoreboard() {
-            let team1Goals = 0, team1Points = 0, team1TwoPointers = 0;
-            let team2Goals = 0, team2Points = 0, team2TwoPointers = 0;
-
-            events.forEach(event => {
-                if (event.category === 'Score') {
-                    const isTeam1 = event.team === 'OUR';
-
-                    if (event.events.includes('Goal')) {
-                        if (isTeam1) team1Goals++; else team2Goals++;
-                    }
-                    if (event.events.includes('Point')) {
-                        if (isTeam1) team1Points++; else team2Points++;
-                    }
-                    if (event.events.includes('2 Pointer')) {
-                        if (isTeam1) team1TwoPointers++; else team2TwoPointers++;
-                    }
-                }
-            });
-
-            // Calculate total points
-            const team1Total = (team1Goals * 3) + team1Points + (team1TwoPointers * 2);
-            const team2Total = (team2Goals * 3) + team2Points + (team2TwoPointers * 2);
-
-            document.getElementById('team1Score').textContent =
-                `${team1Goals}:${team1Points + (team1TwoPointers * 2)} (${team1Total})`;
-            document.getElementById('team2Score').textContent =
-                `${team2Goals}:${team2Points + (team2TwoPointers * 2)} (${team2Total})`;
-        }
-
-        function updateMatrix() {
-            // Reset all cells
-            document.querySelectorAll('.count-cell').forEach(cell => {
-                cell.textContent = '0';
-                cell.classList.remove('has-events');
-            });
-
-            // Count events
-            const counts = {};
-            events.forEach(event => {
-                event.events.forEach(type => {
-                    const key = `${event.category}|${event.team}|${type}`;
-                    counts[key] = (counts[key] || 0) + 1;
-                });
-            });
-
-            // Update cells
-            Object.keys(counts).forEach(key => {
-                const [category, team, type] = key.split('|');
-                const cell = document.querySelector(
-                    `.count-cell[data-category="${category}"][data-team="${team}"][data-type="${type}"]`
-                );
-                if (cell) {
-                    cell.textContent = counts[key];
-                    cell.classList.add('has-events');
-                }
-            });
-        }
-
-        function updateRecentEvents() {
-            const list = document.getElementById('recentEventsList');
-            const recent = events.slice(-10).reverse();
-
-            if (recent.length === 0) {
-                list.innerHTML = '<div class="no-recent-events">No events yet</div>';
+            if (events.length === 0) {
+                list.innerHTML = '<div class="no-events">No events tagged yet. Load a video and start tagging!</div>';
                 return;
             }
 
             list.innerHTML = '';
-            recent.forEach((event, idx) => {
-                const actualIdx = events.length - idx - 1;
+            events.forEach((event, index) => {
                 const item = document.createElement('div');
-                item.className = 'recent-event-item';
+                item.className = 'event-item';
 
                 const info = document.createElement('div');
-                info.className = 'recent-event-info';
+                info.className = 'event-info';
 
-                const time = document.createElement('span');
-                time.className = 'recent-event-time';
-                time.textContent = event.time;
+                const time = document.createElement('div');
+                time.className = 'event-time';
+                time.textContent = `${event.gameTimeFormatted} - ${event.category} (${event.teamName})`;
 
-                const cat = document.createElement('span');
-                cat.className = 'recent-event-cat';
-                cat.textContent = `${event.category} (${event.teamName})`;
-
-                const desc = document.createElement('span');
-                desc.className = 'recent-event-desc';
-                desc.textContent = event.events.join(', ');
+                const details = document.createElement('div');
+                details.className = 'event-details';
+                const detailParts = [];
+                Object.keys(event).forEach(key => {
+                    if (!['category', 'team', 'teamName', 'videoTime', 'gameTime', 'gameTimeFormatted', 'timestamp'].includes(key)) {
+                        detailParts.push(`${key}: ${event[key]}`);
+                    }
+                });
+                details.textContent = detailParts.join(' | ');
 
                 info.appendChild(time);
-                info.appendChild(cat);
-                info.appendChild(desc);
+                info.appendChild(details);
+
+                const actions = document.createElement('div');
+                actions.className = 'event-actions';
+
+                const editBtn = document.createElement('button');
+                editBtn.className = 'event-action-btn edit-btn';
+                editBtn.textContent = '✏️';
+                editBtn.onclick = () => editEvent(index);
 
                 const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'delete-event-btn';
+                deleteBtn.className = 'event-action-btn delete-btn';
                 deleteBtn.textContent = '×';
-                deleteBtn.onclick = () => deleteEvent(actualIdx);
+                deleteBtn.onclick = () => deleteEvent(index);
+
+                actions.appendChild(editBtn);
+                actions.appendChild(deleteBtn);
 
                 item.appendChild(info);
-                item.appendChild(deleteBtn);
+                item.appendChild(actions);
                 list.appendChild(item);
             });
         }
@@ -1175,29 +1034,100 @@
 
             events.splice(index, 1);
             updateUI();
-            updateMatrix();
             updateScoreboard();
-            updateRecentEvents();
+            updateEventsList();
             saveToStorage();
         }
 
-        function showCellEvents(category, team, type) {
-            const matching = events.filter(e =>
-                e.category === category &&
-                e.team === team &&
-                e.events.includes(type)
-            );
+        function editEvent(index) {
+            editingIndex = index;
+            const event = events[index];
 
-            if (matching.length === 0) {
-                alert('No events for this cell');
-                return;
+            document.getElementById('editTime').value = event.gameTimeFormatted;
+
+            const container = document.getElementById('editOptionsContainer');
+            container.innerHTML = '';
+
+            Object.keys(event).forEach(key => {
+                if (!['category', 'videoTime', 'gameTime', 'gameTimeFormatted', 'timestamp'].includes(key)) {
+                    const group = document.createElement('div');
+                    group.className = 'form-group';
+
+                    const label = document.createElement('label');
+                    label.textContent = key;
+
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = event[key];
+                    input.dataset.field = key;
+
+                    group.appendChild(label);
+                    group.appendChild(input);
+                    container.appendChild(group);
+                }
+            });
+
+            document.getElementById('editEventModal').classList.add('active');
+        }
+
+        function saveEditedEvent() {
+            if (editingIndex < 0) return;
+
+            const newTime = parseTimeToSeconds(document.getElementById('editTime').value);
+            events[editingIndex].gameTime = newTime;
+            events[editingIndex].gameTimeFormatted = formatTime(newTime);
+
+            document.querySelectorAll('#editOptionsContainer input').forEach(input => {
+                const field = input.dataset.field;
+                events[editingIndex][field] = input.value;
+            });
+
+            if (events[editingIndex].team) {
+                events[editingIndex].teamName = events[editingIndex].team === 'OUR' ? team1Name : team2Name;
             }
 
-            const msg = matching.map(e =>
-                `${e.time} - ${e.period}: ${e.events.join(', ')}`
-            ).join('\n');
+            events.sort((a, b) => a.gameTime - b.gameTime);
 
-            alert(`${category} (${team === 'OUR' ? team1Name : team2Name}) - ${type}\n\n${msg}`);
+            closeEditModal();
+            updateUI();
+            updateScoreboard();
+            updateEventsList();
+            saveToStorage();
+        }
+
+        function closeEditModal() {
+            document.getElementById('editEventModal').classList.remove('active');
+            editingIndex = -1;
+        }
+
+        // ============================================
+        // UI UPDATES
+        // ============================================
+        function updateUI() {
+            document.getElementById('eventCount').textContent = events.length;
+        }
+
+        function updateScoreboard() {
+            let team1Goals = 0, team1Points = 0;
+            let team2Goals = 0, team2Points = 0;
+
+            events.forEach(event => {
+                if (event.category === 'Shooting' && event.shotOutcome) {
+                    const isTeam1 = event.team === 'OUR';
+
+                    if (event.shotOutcome === 'Goal') {
+                        if (isTeam1) team1Goals++; else team2Goals++;
+                    } else if (event.shotOutcome === 'Point') {
+                        if (isTeam1) team1Points++; else team2Points++;
+                    }
+                }
+            });
+
+            const team1Total = (team1Goals * 3) + team1Points;
+            const team2Total = (team2Goals * 3) + team2Points;
+
+            document.getElementById('team1Score').textContent = `${team1Goals}:${team1Points} (${team1Total})`;
+            document.getElementById('team2Score').textContent = `${team2Goals}:${team2Points} (${team2Total})`;
         }
 
         // ============================================
@@ -1205,90 +1135,29 @@
         // ============================================
         function openSettingsModal() {
             document.getElementById('settingsModal').classList.add('active');
-            document.getElementById('team1Name').value = team1Name;
-            document.getElementById('team2Name').value = team2Name;
-            updateGameName();
         }
 
         function closeSettingsModal() {
             document.getElementById('settingsModal').classList.remove('active');
         }
 
-        function updateGameName() {
-            const t1 = document.getElementById('team1Name').value || 'Team A';
-            const t2 = document.getElementById('team2Name').value || 'Team B';
-            gameName = `${t1} vs ${t2}`;
-            document.getElementById('gameNameDisplay').textContent = `Match: ${gameName}`;
-        }
-
-        function startNewGame() {
-            if (events.length > 0) {
-                if (!confirm('Start a new game? Current game data will be cleared.')) {
-                    return;
-                }
-            }
-
+        function saveSettings() {
             team1Name = document.getElementById('team1Name').value || 'Us';
             team2Name = document.getElementById('team2Name').value || 'Opposition';
-            gameName = `${team1Name} vs ${team2Name}`;
 
-            // Reset game
-            events = [];
-            currentPeriod = 'Not Started';
-            currentCategory = '';
-            selectedEvents = [];
-            timerSeconds = 0;
-            stopTimer();
-
-            // Update UI
             document.getElementById('team1Label').textContent = team1Name;
             document.getElementById('team2Label').textContent = team2Name;
 
-            buildCategoryButtons();
-            updateUI();
-            updateMatrix();
-            updateScoreboard();
-            updateRecentEvents();
-            updateClockDisplay();
-
-            saveToStorage();
-            closeSettingsModal();
-        }
-
-        // ============================================
-        // TIMELINE
-        // ============================================
-        function openTimeline() {
-            if (events.length === 0) {
-                alert('No events to display!');
-                return;
-            }
-
-            const container = document.getElementById('timelineEvents');
-            container.innerHTML = '';
-
+            // Update team names in events
             events.forEach(event => {
-                const div = document.createElement('div');
-                div.className = 'timeline-event';
-
-                const time = document.createElement('div');
-                time.className = 'timeline-event-time';
-                time.textContent = `${event.time} - ${event.period}`;
-
-                const details = document.createElement('div');
-                details.className = 'timeline-event-details';
-                details.textContent = `${event.category} (${event.teamName}): ${event.events.join(', ')}`;
-
-                div.appendChild(time);
-                div.appendChild(details);
-                container.appendChild(div);
+                if (event.team) {
+                    event.teamName = event.team === 'OUR' ? team1Name : team2Name;
+                }
             });
 
-            document.getElementById('timelineModal').classList.add('active');
-        }
-
-        function closeTimeline() {
-            document.getElementById('timelineModal').classList.remove('active');
+            updateEventsList();
+            saveToStorage();
+            closeSettingsModal();
         }
 
         // ============================================
@@ -1300,27 +1169,42 @@
                 return;
             }
 
-            let csv = 'Event#,Timestamp,Game Time,Period,Category,Team,Team Name,Events\n';
+            let csv = 'Event#,Game Time,Video Time,Category,Team,Team Name';
+
+            // Add all unique fields from events
+            const fields = new Set();
+            events.forEach(event => {
+                Object.keys(event).forEach(key => {
+                    if (!['gameTime', 'gameTimeFormatted', 'videoTime', 'category', 'team', 'teamName', 'timestamp'].includes(key)) {
+                        fields.add(key);
+                    }
+                });
+            });
+            fields.forEach(field => csv += `,${field}`);
+            csv += '\n';
 
             events.forEach((event, idx) => {
                 const row = [
                     idx + 1,
-                    event.timestamp,
-                    event.time,
-                    event.period,
+                    event.gameTimeFormatted,
+                    formatTime(event.videoTime),
                     event.category,
                     event.team,
-                    event.teamName,
-                    `"${event.events.join(', ')}"`
+                    event.teamName
                 ];
-                csv += row.join(',') + '\n';
+
+                fields.forEach(field => {
+                    row.push(event[field] || '');
+                });
+
+                csv += row.map(v => `"${v}"`).join(',') + '\n';
             });
 
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `match-tagger-${gameName.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.csv`;
+            a.download = `match-tagger-${team1Name}-vs-${team2Name}-${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -1333,35 +1217,38 @@
             reader.onload = (e) => {
                 try {
                     const lines = e.target.result.split('\n');
+                    const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
                     const imported = [];
 
                     for (let i = 1; i < lines.length; i++) {
                         const line = lines[i].trim();
                         if (!line) continue;
 
-                        const parts = line.split(',');
-                        if (parts.length < 8) continue;
+                        const values = line.split(',').map(v => v.replace(/"/g, '').trim());
+                        const event = {};
 
-                        const eventsStr = parts.slice(7).join(',').replace(/"/g, '');
-
-                        imported.push({
-                            timestamp: parts[1],
-                            time: parts[2],
-                            period: parts[3],
-                            category: parts[4],
-                            team: parts[5],
-                            teamName: parts[6],
-                            events: eventsStr.split(',').map(s => s.trim())
+                        headers.forEach((header, idx) => {
+                            if (header === 'Game Time') {
+                                event.gameTimeFormatted = values[idx];
+                                event.gameTime = parseTimeToSeconds(values[idx]);
+                            } else if (header === 'Video Time') {
+                                event.videoTime = parseTimeToSeconds(values[idx]);
+                            } else if (header !== 'Event#') {
+                                const key = header.charAt(0).toLowerCase() + header.slice(1).replace(/ /g, '');
+                                event[key] = values[idx];
+                            }
                         });
+
+                        event.timestamp = new Date().toISOString();
+                        imported.push(event);
                     }
 
                     if (imported.length > 0) {
                         if (confirm(`Import ${imported.length} events? This will replace current data.`)) {
                             events = imported;
                             updateUI();
-                            updateMatrix();
                             updateScoreboard();
-                            updateRecentEvents();
+                            updateEventsList();
                             saveToStorage();
                             alert('Import successful!');
                         }
@@ -1374,78 +1261,51 @@
             event.target.value = '';
         }
 
-        // ============================================
-        // END GAME
-        // ============================================
-        function endGame() {
+        function clearAllEvents() {
             if (events.length === 0) {
-                alert('No game data to end!');
+                alert('No events to clear!');
                 return;
             }
 
-            if (!confirm('End the current game? Data will be saved and can be exported as CSV.')) {
+            if (!confirm('Clear all events? This cannot be undone.')) {
                 return;
             }
 
-            // Auto-download CSV
-            downloadCSV();
+            events = [];
+            updateUI();
+            updateScoreboard();
+            updateEventsList();
+            saveToStorage();
+        }
 
-            if (confirm('Clear game data and start fresh?')) {
-                events = [];
-                currentPeriod = 'Not Started';
-                currentCategory = '';
-                selectedEvents = [];
-                timerSeconds = 0;
-                stopTimer();
+        // ============================================
+        // UTILITIES
+        // ============================================
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
 
-                updateUI();
-                updateMatrix();
-                updateScoreboard();
-                updateRecentEvents();
-                updateClockDisplay();
-                saveToStorage();
+        function parseTimeToSeconds(timeStr) {
+            const parts = timeStr.split(':').map(p => parseInt(p) || 0);
+            if (parts.length === 2) {
+                return parts[0] * 60 + parts[1];
             }
+            return 0;
         }
 
         // ============================================
-        // SPLASH SCREEN
+        // INITIALIZATION
         // ============================================
-        function showSplash() {
-            const splash = document.getElementById('splashScreen');
-            splash.classList.add('show');
-
-            setTimeout(() => {
-                dismissSplash();
-            }, 3000);
-        }
-
-        function dismissSplash() {
-            const splash = document.getElementById('splashScreen');
-            splash.classList.add('fade-out');
-
-            setTimeout(() => {
-                splash.classList.remove('show', 'fade-out');
-            }, 300);
-        }
-
-        // ============================================
-        // PWA SUPPORT
-        // ============================================
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(() => {
-                    console.log('Service worker registration skipped');
-                });
-            });
-        }
-
-        // Initialize on load
         window.addEventListener('load', init);
 
-        // Update recent events on init
-        setTimeout(() => {
-            updateRecentEvents();
-        }, 100);
+        // Update tag button text when video time changes
+        setInterval(() => {
+            if (currentCategory) {
+                updateTagButton();
+            }
+        }, 1000);
     </script>
 </body>
 </html>
