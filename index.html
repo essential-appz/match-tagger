@@ -915,16 +915,20 @@
         }
 
         function restoreCollapsedStates() {
-            const sections = ['tagEventSection', 'eventsListSection'];
-            sections.forEach(sectionId => {
-                const isCollapsed = localStorage.getItem(sectionId + 'Collapsed') === 'true';
-                if (isCollapsed) {
-                    const section = document.getElementById(sectionId);
-                    const icon = document.getElementById(sectionId.replace('Section', 'Icon'));
-                    section.classList.add('collapsed');
-                    icon.classList.add('collapsed');
-                }
-            });
+            // Tag Event section always starts expanded, only restore Tagged Events state
+            const eventsListCollapsed = localStorage.getItem('eventsListSectionCollapsed') === 'true';
+            if (eventsListCollapsed) {
+                const section = document.getElementById('eventsListSection');
+                const icon = document.getElementById('eventsListIcon');
+                section.classList.add('collapsed');
+                icon.classList.add('collapsed');
+            }
+
+            // Ensure Tag Event is always expanded on load
+            const tagEventSection = document.getElementById('tagEventSection');
+            const tagEventIcon = document.getElementById('tagEventIcon');
+            tagEventSection.classList.remove('collapsed');
+            tagEventIcon.classList.remove('collapsed');
         }
 
         function loadFromStorage() {
