@@ -42,7 +42,7 @@ Global state variables in `<script>` section:
 Each event contains:
 ```javascript
 {
-  category: "Kickouts" | "Turnovers" | "Shooting",
+  category: "Kickouts" | "Turnovers" | "Shooting" | "ThrowUp",
   team: "OUR" | "OPP",
   teamName: actual team name,
   videoTime: video timestamp in seconds,
@@ -60,7 +60,9 @@ Each event contains:
   // Shooting:
   shotType: "Free" | "Play" | "45" | "Penalty",
   shotLocation: "Inside 21m" | "21-45m" | "Beyond 45m",
-  shotOutcome: "Goal" | "Point" | "Wide" | "Short" | "Saved" | "Blocked"
+  shotOutcome: "Goal" | "Point" | "Wide" | "Short" | "Saved" | "Blocked",
+  // Throw Up:
+  throwUpResult: "Won" | "Lost"
 }
 ```
 
@@ -82,6 +84,10 @@ Each event contains:
 - Shot Type: Free, Play, 45, Penalty
 - Shot Location: Inside 21m, 21-45m, Beyond 45m
 - Shot Outcome: Goal, Point, Wide, Short, Saved, Blocked
+
+**Throw Up:**
+- Team: OUR, OPP
+- Result: Won, Lost
 
 ### UI Components
 

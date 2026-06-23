@@ -719,6 +719,7 @@
             <button class="category-tab" onclick="selectCategory('Kickouts')">Kickouts</button>
             <button class="category-tab" onclick="selectCategory('Turnovers')">Turnovers</button>
             <button class="category-tab" onclick="selectCategory('Shooting')">Shooting</button>
+            <button class="category-tab" onclick="selectCategory('ThrowUp')">Throw Up</button>
         </div>
 
         <!-- Kickouts Options -->
@@ -822,6 +823,24 @@
                     <button class="option-btn" data-field="shotOutcome" data-value="Short" onclick="selectOption(this)">Short</button>
                     <button class="option-btn" data-field="shotOutcome" data-value="Saved" onclick="selectOption(this)">Saved</button>
                     <button class="option-btn" data-field="shotOutcome" data-value="Blocked" onclick="selectOption(this)">Blocked</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Throw Up Options -->
+        <div id="throwupOptions" class="event-options">
+            <div class="option-group">
+                <label>Team</label>
+                <div class="button-group">
+                    <button class="option-btn" data-field="team" data-value="OUR" onclick="selectOption(this)">Us</button>
+                    <button class="option-btn" data-field="team" data-value="OPP" onclick="selectOption(this)">Opposition</button>
+                </div>
+            </div>
+            <div class="option-group">
+                <label>Result</label>
+                <div class="button-group">
+                    <button class="option-btn" data-field="throwUpResult" data-value="Won" onclick="selectOption(this)">Won</button>
+                    <button class="option-btn" data-field="throwUpResult" data-value="Lost" onclick="selectOption(this)">Lost</button>
                 </div>
             </div>
         </div>
@@ -1421,6 +1440,7 @@
             let kickoutsOur = 0, kickoutsOpp = 0;
             let kickoutsWonOur = 0, kickoutsWonOpp = 0;
             let turnoversOur = 0, turnoversOpp = 0;
+            let possessionsOur = 0, possessionsOpp = 0;
 
             // Count events
             events.forEach(event => {
@@ -1437,14 +1457,45 @@
                         kickoutsOpp++;
                         if (event.kickoutResult === 'Won') kickoutsWonOpp++;
                     }
+
+                    // Possession starts from kickouts
+                    // Own kickout won OR opponent kickout lost
+                    if ((event.team === 'OUR' && event.kickoutResult === 'Won') ||
+                        (event.team === 'OPP' && event.kickoutResult === 'Lost')) {
+                        possessionsOur++;
+                    } else if ((event.team === 'OPP' && event.kickoutResult === 'Won') ||
+                               (event.team === 'OUR' && event.kickoutResult === 'Lost')) {
+                        possessionsOpp++;
+                    }
                 }
 
                 if (event.category === 'Turnovers') {
                     // Turnovers Won = opponent lost possession
-                    if (event.team === 'OPP') turnoversOur++;
-                    else turnoversOpp++;
+                    if (event.team === 'OPP') {
+                        turnoversOur++;
+                        possessionsOur++; // OUR gains possession from OPP turnover
+                    } else {
+                        turnoversOpp++;
+                        possessionsOpp++; // OPP gains possession from OUR turnover
+                    }
+                }
+
+                if (event.category === 'ThrowUp') {
+                    // Possession starts from throw ups
+                    // Team won OR opponent lost
+                    if ((event.team === 'OUR' && event.throwUpResult === 'Won') ||
+                        (event.team === 'OPP' && event.throwUpResult === 'Lost')) {
+                        possessionsOur++;
+                    } else if ((event.team === 'OPP' && event.throwUpResult === 'Won') ||
+                               (event.team === 'OUR' && event.throwUpResult === 'Lost')) {
+                        possessionsOpp++;
+                    }
                 }
             });
+
+            // Update Possessions
+            document.getElementById('possessionsOur').textContent = possessionsOur;
+            document.getElementById('possessionsOpp').textContent = possessionsOpp;
 
             // Update Shots
             document.getElementById('shotsOur').textContent = shotsOur;
@@ -1460,9 +1511,7 @@
             document.getElementById('turnoversWonOur').textContent = turnoversOur;
             document.getElementById('turnoversWonOpp').textContent = turnoversOpp;
 
-            // Possessions, Attacks, Productivity - placeholders for now
-            document.getElementById('possessionsOur').textContent = '-';
-            document.getElementById('possessionsOpp').textContent = '-';
+            // Attacks, Productivity - placeholders for now
             document.getElementById('attacksOur').textContent = '-';
             document.getElementById('attacksOpp').textContent = '-';
             document.getElementById('productivityOur').textContent = '-';

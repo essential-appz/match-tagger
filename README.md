@@ -60,6 +60,11 @@ Track all shot attempts with:
 - **Location**: Inside 21m, 21-45m, Beyond 45m
 - **Outcome**: Goal, Point, Wide, Short, Saved, Blocked
 
+### Throw Up
+Track throw-up situations with:
+- **Team**: Which team the throw-up was for (Us/Opposition)
+- **Result**: Won, Lost
+
 ## Workflow
 
 ### Typical Analysis Session
