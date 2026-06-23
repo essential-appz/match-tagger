@@ -1526,6 +1526,7 @@
         function updateProductivityMetrics() {
             // Initialize counters
             let shotsOur = 0, shotsOpp = 0;
+            let attacksOur = 0, attacksOpp = 0;
             let kickoutsOur = 0, kickoutsOpp = 0;
             let kickoutsWonOur = 0, kickoutsWonOpp = 0;
             let turnoversOur = 0, turnoversOpp = 0;
@@ -1538,6 +1539,12 @@
             events.forEach(event => {
                 // Determine which team gained possession from this event (if any)
                 let possessionGainedBy = null;
+
+                if (event.category === 'Attack') {
+                    // Count attacks
+                    if (event.team === 'OUR') attacksOur++;
+                    else attacksOpp++;
+                }
 
                 if (event.category === 'Shooting') {
                     // Count shots
@@ -1617,9 +1624,11 @@
             document.getElementById('turnoversWonOur').textContent = turnoversOur;
             document.getElementById('turnoversWonOpp').textContent = turnoversOpp;
 
-            // Attacks, Productivity - placeholders for now
-            document.getElementById('attacksOur').textContent = '-';
-            document.getElementById('attacksOpp').textContent = '-';
+            // Update Attacks
+            document.getElementById('attacksOur').textContent = attacksOur;
+            document.getElementById('attacksOpp').textContent = attacksOpp;
+
+            // Productivity - placeholder for now
             document.getElementById('productivityOur').textContent = '-';
             document.getElementById('productivityOpp').textContent = '-';
 
