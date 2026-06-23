@@ -208,6 +208,58 @@
             font-weight: bold;
         }
 
+        /* Possession Display */
+        .possession-display {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .possession-info {
+            flex: 1;
+            text-align: center;
+        }
+
+        .possession-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .possession-team {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2196F3;
+        }
+
+        .possession-team.none {
+            color: #999;
+            font-style: italic;
+        }
+
+        .attack-btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            background: #FF9800;
+            color: white;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .attack-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
         /* Stats */
         .stats {
             display: flex;
@@ -678,6 +730,15 @@
         <input type="file" id="videoFileInput" accept="video/*" style="display: none;" onchange="loadVideo(event)">
     </div>
 
+    <!-- Possession Display -->
+    <div class="possession-display">
+        <div class="possession-info">
+            <div class="possession-label">Current Possession</div>
+            <div class="possession-team none" id="possessionTeam">No possession</div>
+        </div>
+        <button class="attack-btn" id="attackBtn" onclick="logAttack()" disabled>📍 Log Attack</button>
+    </div>
+
     <!-- Stats -->
     <div class="stats">
         <div class="stat-box">
@@ -818,6 +879,7 @@
                 <label>Shot Outcome</label>
                 <div class="button-group">
                     <button class="option-btn" data-field="shotOutcome" data-value="Goal" onclick="selectOption(this)">Goal</button>
+                    <button class="option-btn" data-field="shotOutcome" data-value="2-Pointer" onclick="selectOption(this)">2-Pointer</button>
                     <button class="option-btn" data-field="shotOutcome" data-value="Point" onclick="selectOption(this)">Point</button>
                     <button class="option-btn" data-field="shotOutcome" data-value="Wide" onclick="selectOption(this)">Wide</button>
                     <button class="option-btn" data-field="shotOutcome" data-value="Short" onclick="selectOption(this)">Short</button>
@@ -971,6 +1033,7 @@
         let videoOffset = 0; // seconds - when 1st half starts
         let secondHalfOffset = 0; // seconds - when 2nd half starts (0 = not set)
         let editingIndex = -1;
+        let currentPossessionTeam = null; // null, 'OUR', or 'OPP'
 
         const video = document.getElementById('videoPlayer');
 
@@ -981,7 +1044,7 @@
             loadFromStorage();
             updateUI();
             updateScoreboard();
-            updateProductivityMetrics();
+            updateProductivityMetrics(); // This will also update possession display
             updateEventsList();
 
             // Video event listeners
@@ -1318,7 +1381,7 @@
 
                 const time = document.createElement('div');
                 time.className = 'event-time';
-                time.textContent = `${event.gameTimeFormatted} - ${event.category} (${event.teamName})`;
+                time.textContent = `${event.gameTimeFormatted} (${formatTime(event.videoTime)}) - ${event.category} (${event.teamName})`;
 
                 const details = document.createElement('div');
                 details.className = 'event-details';
@@ -1447,6 +1510,8 @@
                         if (isTeam1) team1Goals++; else team2Goals++;
                     } else if (event.shotOutcome === 'Point') {
                         if (isTeam1) team1Points++; else team2Points++;
+                    } else if (event.shotOutcome === '2-Pointer') {
+                        if (isTeam1) team1Points += 2; else team2Points += 2;
                     }
                 }
             });
@@ -1466,8 +1531,8 @@
             let turnoversOur = 0, turnoversOpp = 0;
             let possessionsOur = 0, possessionsOpp = 0;
 
-            // Track current possession for sequence validation
-            let currentPossessionTeam = null; // null, 'OUR', or 'OPP'
+            // Track current possession for sequence validation (use global variable)
+            currentPossessionTeam = null; // Reset to null before processing
 
             // Process events in chronological order (already sorted by gameTime)
             events.forEach(event => {
@@ -1557,6 +1622,59 @@
             document.getElementById('attacksOpp').textContent = '-';
             document.getElementById('productivityOur').textContent = '-';
             document.getElementById('productivityOpp').textContent = '-';
+
+            // Update possession display
+            updatePossessionDisplay();
+        }
+
+        function updatePossessionDisplay() {
+            const possessionTeamEl = document.getElementById('possessionTeam');
+            const attackBtn = document.getElementById('attackBtn');
+
+            if (currentPossessionTeam === null) {
+                possessionTeamEl.textContent = 'No possession';
+                possessionTeamEl.className = 'possession-team none';
+                attackBtn.disabled = true;
+            } else {
+                const teamName = currentPossessionTeam === 'OUR' ? team1Name : team2Name;
+                possessionTeamEl.textContent = teamName;
+                possessionTeamEl.className = 'possession-team';
+                attackBtn.disabled = false;
+            }
+        }
+
+        function logAttack() {
+            if (currentPossessionTeam === null) {
+                alert('No team has possession!');
+                return;
+            }
+
+            if (video.currentTime === 0 && !video.duration) {
+                alert('Please load a video first!');
+                return;
+            }
+
+            const gameTime = getGameTime();
+            const teamName = currentPossessionTeam === 'OUR' ? team1Name : team2Name;
+
+            const event = {
+                category: 'Attack',
+                team: currentPossessionTeam,
+                teamName: teamName,
+                videoTime: Math.floor(video.currentTime),
+                gameTime: gameTime,
+                gameTimeFormatted: formatTime(gameTime),
+                timestamp: new Date().toISOString()
+            };
+
+            events.push(event);
+            events.sort((a, b) => a.gameTime - b.gameTime);
+
+            updateUI();
+            updateScoreboard();
+            updateProductivityMetrics();
+            updateEventsList();
+            saveToStorage();
         }
 
         // ============================================
