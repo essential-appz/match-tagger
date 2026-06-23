@@ -479,6 +479,11 @@
 
         .event-info {
             flex: 1;
+            cursor: pointer;
+        }
+
+        .event-info:hover {
+            opacity: 0.8;
         }
 
         .event-time {
@@ -1378,6 +1383,7 @@
 
                 const info = document.createElement('div');
                 info.className = 'event-info';
+                info.onclick = () => seekToEvent(event.videoTime);
 
                 const time = document.createElement('div');
                 time.className = 'event-time';
@@ -1416,6 +1422,14 @@
                 item.appendChild(actions);
                 list.appendChild(item);
             }
+        }
+
+        function seekToEvent(videoTime) {
+            if (!video.duration) {
+                alert('Please load a video first!');
+                return;
+            }
+            video.currentTime = videoTime;
         }
 
         function deleteEvent(index) {
