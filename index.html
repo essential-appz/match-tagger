@@ -761,10 +761,10 @@
         <!-- Turnovers Options -->
         <div id="turnoversOptions" class="event-options">
             <div class="option-group">
-                <label>Team</label>
+                <label>Turnover Won By</label>
                 <div class="button-group">
-                    <button class="option-btn" data-field="team" data-value="OUR" onclick="selectOption(this)">Us</button>
-                    <button class="option-btn" data-field="team" data-value="OPP" onclick="selectOption(this)">Opposition</button>
+                    <button class="option-btn" data-field="turnoverWonBy" data-value="OUR" onclick="selectOption(this)">Us</button>
+                    <button class="option-btn" data-field="turnoverWonBy" data-value="OPP" onclick="selectOption(this)">Opposition</button>
                 </div>
             </div>
             <div class="option-group">
@@ -1208,8 +1208,16 @@
 
         function updateTagButton() {
             const btn = document.getElementById('tagEventBtn');
-            // Throw Up uses wonBy, other categories use team
-            const hasRequiredField = currentCategory === 'ThrowUp' ? currentEvent.wonBy : currentEvent.team;
+            // Different categories use different fields
+            let hasRequiredField;
+            if (currentCategory === 'ThrowUp') {
+                hasRequiredField = currentEvent.wonBy;
+            } else if (currentCategory === 'Turnovers') {
+                hasRequiredField = currentEvent.turnoverWonBy;
+            } else {
+                hasRequiredField = currentEvent.team;
+            }
+
             const isValid = currentCategory && hasRequiredField;
             btn.disabled = !isValid;
 
@@ -1225,8 +1233,15 @@
         // TAG EVENT
         // ============================================
         function tagEvent() {
-            // Throw Up uses wonBy, other categories use team
-            const hasRequiredField = currentCategory === 'ThrowUp' ? currentEvent.wonBy : currentEvent.team;
+            // Different categories use different fields
+            let hasRequiredField;
+            if (currentCategory === 'ThrowUp') {
+                hasRequiredField = currentEvent.wonBy;
+            } else if (currentCategory === 'Turnovers') {
+                hasRequiredField = currentEvent.turnoverWonBy;
+            } else {
+                hasRequiredField = currentEvent.team;
+            }
 
             if (!currentCategory || !hasRequiredField) {
                 alert('Please select a category and required options!');
@@ -1244,6 +1259,8 @@
             let teamName;
             if (currentCategory === 'ThrowUp') {
                 teamName = currentEvent.wonBy === 'OUR' ? team1Name : team2Name;
+            } else if (currentCategory === 'Turnovers') {
+                teamName = currentEvent.turnoverWonBy === 'OUR' ? team1Name : team2Name;
             } else {
                 teamName = currentEvent.team === 'OUR' ? team1Name : team2Name;
             }
@@ -1487,13 +1504,13 @@
                 }
 
                 if (event.category === 'Turnovers') {
-                    // Count turnovers won
-                    if (event.team === 'OPP') {
+                    // Count turnovers won - now using turnoverWonBy field
+                    if (event.turnoverWonBy === 'OUR') {
                         turnoversOur++;
-                        possessionGainedBy = 'OUR'; // OUR gains possession from OPP turnover
-                    } else {
+                        possessionGainedBy = 'OUR';
+                    } else if (event.turnoverWonBy === 'OPP') {
                         turnoversOpp++;
-                        possessionGainedBy = 'OPP'; // OPP gains possession from OUR turnover
+                        possessionGainedBy = 'OPP';
                     }
                 }
 
