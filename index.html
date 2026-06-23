@@ -1449,14 +1449,25 @@
             let turnoversOur = 0, turnoversOpp = 0;
             let possessionsOur = 0, possessionsOpp = 0;
 
-            // Count events
+            // Track current possession for sequence validation
+            let currentPossessionTeam = null; // null, 'OUR', or 'OPP'
+
+            // Process events in chronological order (already sorted by gameTime)
             events.forEach(event => {
+                // Determine which team gained possession from this event (if any)
+                let possessionGainedBy = null;
+
                 if (event.category === 'Shooting') {
+                    // Count shots
                     if (event.team === 'OUR') shotsOur++;
                     else shotsOpp++;
+
+                    // Shots END possession
+                    currentPossessionTeam = null;
                 }
 
                 if (event.category === 'Kickouts') {
+                    // Count kickouts
                     if (event.team === 'OUR') {
                         kickoutsOur++;
                         if (event.kickoutResult === 'Won') kickoutsWonOur++;
@@ -1465,35 +1476,44 @@
                         if (event.kickoutResult === 'Won') kickoutsWonOpp++;
                     }
 
-                    // Possession starts from kickouts
-                    // Own kickout won OR opponent kickout lost
+                    // Determine who gained possession
                     if ((event.team === 'OUR' && event.kickoutResult === 'Won') ||
                         (event.team === 'OPP' && event.kickoutResult === 'Lost')) {
-                        possessionsOur++;
+                        possessionGainedBy = 'OUR';
                     } else if ((event.team === 'OPP' && event.kickoutResult === 'Won') ||
                                (event.team === 'OUR' && event.kickoutResult === 'Lost')) {
-                        possessionsOpp++;
+                        possessionGainedBy = 'OPP';
                     }
                 }
 
                 if (event.category === 'Turnovers') {
-                    // Turnovers Won = opponent lost possession
+                    // Count turnovers won
                     if (event.team === 'OPP') {
                         turnoversOur++;
-                        possessionsOur++; // OUR gains possession from OPP turnover
+                        possessionGainedBy = 'OUR'; // OUR gains possession from OPP turnover
                     } else {
                         turnoversOpp++;
-                        possessionsOpp++; // OPP gains possession from OUR turnover
+                        possessionGainedBy = 'OPP'; // OPP gains possession from OUR turnover
                     }
                 }
 
                 if (event.category === 'ThrowUp') {
-                    // Possession starts from throw ups - whoever won it
+                    // Determine who gained possession
                     if (event.wonBy === 'OUR') {
-                        possessionsOur++;
+                        possessionGainedBy = 'OUR';
                     } else if (event.wonBy === 'OPP') {
+                        possessionGainedBy = 'OPP';
+                    }
+                }
+
+                // Count possession if it's a NEW possession (team didn't already have it)
+                if (possessionGainedBy && possessionGainedBy !== currentPossessionTeam) {
+                    if (possessionGainedBy === 'OUR') {
+                        possessionsOur++;
+                    } else {
                         possessionsOpp++;
                     }
+                    currentPossessionTeam = possessionGainedBy;
                 }
             });
 
