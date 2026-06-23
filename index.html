@@ -579,11 +579,13 @@
         <div class="video-offset">
             <label>1st Half Start:</label>
             <input type="text" id="offsetInput" placeholder="00:00" value="00:00" onchange="updateOffset()">
+            <button class="video-btn" style="margin-left: 8px;" onclick="playFromFirstHalf()">▶️ Play</button>
             <span style="color: #666; font-size: 12px;">(Video time when 1st half starts)</span>
         </div>
         <div class="video-offset">
             <label>2nd Half Start:</label>
             <input type="text" id="secondHalfOffsetInput" placeholder="30:00" value="" onchange="updateSecondHalfOffset()">
+            <button class="video-btn" style="margin-left: 8px;" onclick="playFromSecondHalf()">▶️ Play</button>
             <span style="color: #666; font-size: 12px;">(Video time when 2nd half starts, leave empty if no 2nd half yet)</span>
         </div>
         <input type="file" id="videoFileInput" accept="video/*" style="display: none;" onchange="loadVideo(event)">
@@ -923,6 +925,28 @@
             const input = document.getElementById('secondHalfOffsetInput').value;
             secondHalfOffset = input ? parseTimeToSeconds(input) : 0;
             saveToStorage();
+        }
+
+        function playFromFirstHalf() {
+            if (!video.duration) {
+                alert('Please load a video first!');
+                return;
+            }
+            video.currentTime = videoOffset;
+            video.play();
+        }
+
+        function playFromSecondHalf() {
+            if (!video.duration) {
+                alert('Please load a video first!');
+                return;
+            }
+            if (secondHalfOffset === 0) {
+                alert('Please set the 2nd Half Start offset first!');
+                return;
+            }
+            video.currentTime = secondHalfOffset;
+            video.play();
         }
 
         function getGameTime() {
