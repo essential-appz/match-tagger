@@ -1073,7 +1073,11 @@
             }
 
             list.innerHTML = '';
-            events.forEach((event, index) => {
+            // Display events in reverse chronological order (newest first)
+            for (let i = events.length - 1; i >= 0; i--) {
+                const event = events[i];
+                const index = i;
+
                 const item = document.createElement('div');
                 item.className = 'event-item';
 
@@ -1116,7 +1120,7 @@
                 item.appendChild(info);
                 item.appendChild(actions);
                 list.appendChild(item);
-            });
+            }
         }
 
         function deleteEvent(index) {
