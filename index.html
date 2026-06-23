@@ -366,6 +366,48 @@
             cursor: not-allowed;
         }
 
+        /* Productivity Table */
+        .productivity-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .productivity-table th,
+        .productivity-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 14px;
+        }
+
+        .productivity-table th {
+            background: #f5f5f5;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .productivity-table th:first-child {
+            width: 40%;
+        }
+
+        .productivity-table th:nth-child(2),
+        .productivity-table th:nth-child(3) {
+            width: 30%;
+            text-align: center;
+        }
+
+        .productivity-table td:nth-child(2),
+        .productivity-table td:nth-child(3) {
+            text-align: center;
+            font-weight: bold;
+            color: #2196F3;
+        }
+
+        .productivity-table tbody tr:hover {
+            background: #f9f9f9;
+        }
+
         /* Events List */
         .events-list {
             max-height: 400px;
@@ -790,6 +832,57 @@
                 </div>
             </div>
 
+            <!-- Productivity Section -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection('productivitySection')">
+                    <h2>Productivity</h2>
+                    <span class="collapse-icon" id="productivityIcon">▼</span>
+                </div>
+                <div class="section-content" id="productivitySection">
+                    <table class="productivity-table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Us</th>
+                                <th>Opposition</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Possessions</td>
+                                <td id="possessionsOur">-</td>
+                                <td id="possessionsOpp">-</td>
+                            </tr>
+                            <tr>
+                                <td>Attacks</td>
+                                <td id="attacksOur">-</td>
+                                <td id="attacksOpp">-</td>
+                            </tr>
+                            <tr>
+                                <td>Shots</td>
+                                <td id="shotsOur">0</td>
+                                <td id="shotsOpp">0</td>
+                            </tr>
+                            <tr>
+                                <td>Productivity</td>
+                                <td id="productivityOur">-</td>
+                                <td id="productivityOpp">-</td>
+                            </tr>
+                            <tr>
+                                <td>Kickout Success</td>
+                                <td id="kickoutSuccessOur">0/0 (0%)</td>
+                                <td id="kickoutSuccessOpp">0/0 (0%)</td>
+                            </tr>
+                            <tr>
+                                <td>Turnovers Won</td>
+                                <td id="turnoversWonOur">0</td>
+                                <td id="turnoversWonOpp">0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- Events List -->
             <div class="section">
                 <div class="section-header" onclick="toggleSection('eventsListSection')">
@@ -876,6 +969,7 @@
             loadFromStorage();
             updateUI();
             updateScoreboard();
+            updateProductivityMetrics();
             updateEventsList();
 
             // Video event listeners
@@ -915,7 +1009,16 @@
         }
 
         function restoreCollapsedStates() {
-            // Tag Event section always starts expanded, only restore Tagged Events state
+            // Restore Productivity section state
+            const productivityCollapsed = localStorage.getItem('productivitySectionCollapsed') === 'true';
+            if (productivityCollapsed) {
+                const section = document.getElementById('productivitySection');
+                const icon = document.getElementById('productivityIcon');
+                section.classList.add('collapsed');
+                icon.classList.add('collapsed');
+            }
+
+            // Restore Tagged Events state
             const eventsListCollapsed = localStorage.getItem('eventsListSectionCollapsed') === 'true';
             if (eventsListCollapsed) {
                 const section = document.getElementById('eventsListSection');
@@ -1139,6 +1242,7 @@
 
             updateUI();
             updateScoreboard();
+            updateProductivityMetrics();
             updateEventsList();
             saveToStorage();
         }
@@ -1214,6 +1318,7 @@
             events.splice(index, 1);
             updateUI();
             updateScoreboard();
+            updateProductivityMetrics();
             updateEventsList();
             saveToStorage();
         }
@@ -1270,6 +1375,7 @@
             closeEditModal();
             updateUI();
             updateScoreboard();
+            updateProductivityMetrics();
             updateEventsList();
             saveToStorage();
         }
@@ -1307,6 +1413,60 @@
 
             document.getElementById('team1Score').textContent = `${team1Goals}:${team1Points} (${team1Total})`;
             document.getElementById('team2Score').textContent = `${team2Goals}:${team2Points} (${team2Total})`;
+        }
+
+        function updateProductivityMetrics() {
+            // Initialize counters
+            let shotsOur = 0, shotsOpp = 0;
+            let kickoutsOur = 0, kickoutsOpp = 0;
+            let kickoutsWonOur = 0, kickoutsWonOpp = 0;
+            let turnoversOur = 0, turnoversOpp = 0;
+
+            // Count events
+            events.forEach(event => {
+                if (event.category === 'Shooting') {
+                    if (event.team === 'OUR') shotsOur++;
+                    else shotsOpp++;
+                }
+
+                if (event.category === 'Kickouts') {
+                    if (event.team === 'OUR') {
+                        kickoutsOur++;
+                        if (event.kickoutResult === 'Won') kickoutsWonOur++;
+                    } else {
+                        kickoutsOpp++;
+                        if (event.kickoutResult === 'Won') kickoutsWonOpp++;
+                    }
+                }
+
+                if (event.category === 'Turnovers') {
+                    // Turnovers Won = opponent lost possession
+                    if (event.team === 'OPP') turnoversOur++;
+                    else turnoversOpp++;
+                }
+            });
+
+            // Update Shots
+            document.getElementById('shotsOur').textContent = shotsOur;
+            document.getElementById('shotsOpp').textContent = shotsOpp;
+
+            // Update Kickout Success
+            const kickoutSuccessOurPct = kickoutsOur > 0 ? Math.round((kickoutsWonOur / kickoutsOur) * 100) : 0;
+            const kickoutSuccessOppPct = kickoutsOpp > 0 ? Math.round((kickoutsWonOpp / kickoutsOpp) * 100) : 0;
+            document.getElementById('kickoutSuccessOur').textContent = `${kickoutsWonOur}/${kickoutsOur} (${kickoutSuccessOurPct}%)`;
+            document.getElementById('kickoutSuccessOpp').textContent = `${kickoutsWonOpp}/${kickoutsOpp} (${kickoutSuccessOppPct}%)`;
+
+            // Update Turnovers Won
+            document.getElementById('turnoversWonOur').textContent = turnoversOur;
+            document.getElementById('turnoversWonOpp').textContent = turnoversOpp;
+
+            // Possessions, Attacks, Productivity - placeholders for now
+            document.getElementById('possessionsOur').textContent = '-';
+            document.getElementById('possessionsOpp').textContent = '-';
+            document.getElementById('attacksOur').textContent = '-';
+            document.getElementById('attacksOpp').textContent = '-';
+            document.getElementById('productivityOur').textContent = '-';
+            document.getElementById('productivityOpp').textContent = '-';
         }
 
         // ============================================
@@ -1453,6 +1613,7 @@
             events = [];
             updateUI();
             updateScoreboard();
+            updateProductivityMetrics();
             updateEventsList();
             saveToStorage();
         }
