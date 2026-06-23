@@ -46,7 +46,6 @@ Track all kickout situations with:
 - **Type**: Short, Long, Medium
 - **Result**: Won, Lost, Breaking Ball, Contested
 - **Location**: Left, Center, Right
-- **Mark Taken**: Yes/No
 
 ### Turnovers
 Track possession changes with:

@@ -54,7 +54,6 @@ Each event contains:
   kickoutType: "Short" | "Long" | "Medium",
   kickoutResult: "Won" | "Lost" | "Breaking Ball" | "Contested",
   kickoutLocation: "Left" | "Center" | "Right",
-  markTaken: "Yes" | "No",
   // Turnovers:
   turnoverType: "Forced" | "Unforced" | "Interception" | "Tackle" | "Dispossessed" | "Block Down",
   turnoverLocation: "Defensive Third" | "Middle Third" | "Attacking Third",
@@ -72,7 +71,6 @@ Each event contains:
 - Kickout Type: Short, Long, Medium
 - Kickout Result: Won, Lost, Breaking Ball, Contested
 - Kickout Location: Left, Center, Right
-- Mark Taken: Yes, No
 
 **Turnovers:**
 - Team: OUR, OPP
