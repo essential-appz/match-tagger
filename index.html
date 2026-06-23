@@ -1208,7 +1208,9 @@
 
         function updateTagButton() {
             const btn = document.getElementById('tagEventBtn');
-            const isValid = currentCategory && currentEvent.team;
+            // Throw Up uses wonBy, other categories use team
+            const hasRequiredField = currentCategory === 'ThrowUp' ? currentEvent.wonBy : currentEvent.team;
+            const isValid = currentCategory && hasRequiredField;
             btn.disabled = !isValid;
 
             if (isValid && video.currentTime > 0) {
@@ -1223,8 +1225,11 @@
         // TAG EVENT
         // ============================================
         function tagEvent() {
-            if (!currentCategory || !currentEvent.team) {
-                alert('Please select a category and team!');
+            // Throw Up uses wonBy, other categories use team
+            const hasRequiredField = currentCategory === 'ThrowUp' ? currentEvent.wonBy : currentEvent.team;
+
+            if (!currentCategory || !hasRequiredField) {
+                alert('Please select a category and required options!');
                 return;
             }
 
@@ -1234,13 +1239,22 @@
             }
 
             const gameTime = getGameTime();
+
+            // Set teamName based on category
+            let teamName;
+            if (currentCategory === 'ThrowUp') {
+                teamName = currentEvent.wonBy === 'OUR' ? team1Name : team2Name;
+            } else {
+                teamName = currentEvent.team === 'OUR' ? team1Name : team2Name;
+            }
+
             const event = {
                 ...currentEvent,
                 videoTime: Math.floor(video.currentTime),
                 gameTime: gameTime,
                 gameTimeFormatted: formatTime(gameTime),
                 timestamp: new Date().toISOString(),
-                teamName: currentEvent.team === 'OUR' ? team1Name : team2Name
+                teamName: teamName
             };
 
             events.push(event);
