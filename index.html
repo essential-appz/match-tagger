@@ -830,17 +830,10 @@
         <!-- Throw Up Options -->
         <div id="throwupOptions" class="event-options">
             <div class="option-group">
-                <label>Team</label>
+                <label>Won By</label>
                 <div class="button-group">
-                    <button class="option-btn" data-field="team" data-value="OUR" onclick="selectOption(this)">Us</button>
-                    <button class="option-btn" data-field="team" data-value="OPP" onclick="selectOption(this)">Opposition</button>
-                </div>
-            </div>
-            <div class="option-group">
-                <label>Result</label>
-                <div class="button-group">
-                    <button class="option-btn" data-field="throwUpResult" data-value="Won" onclick="selectOption(this)">Won</button>
-                    <button class="option-btn" data-field="throwUpResult" data-value="Lost" onclick="selectOption(this)">Lost</button>
+                    <button class="option-btn" data-field="wonBy" data-value="OUR" onclick="selectOption(this)">Us</button>
+                    <button class="option-btn" data-field="wonBy" data-value="OPP" onclick="selectOption(this)">Opposition</button>
                 </div>
             </div>
         </div>
@@ -1481,13 +1474,10 @@
                 }
 
                 if (event.category === 'ThrowUp') {
-                    // Possession starts from throw ups
-                    // Team won OR opponent lost
-                    if ((event.team === 'OUR' && event.throwUpResult === 'Won') ||
-                        (event.team === 'OPP' && event.throwUpResult === 'Lost')) {
+                    // Possession starts from throw ups - whoever won it
+                    if (event.wonBy === 'OUR') {
                         possessionsOur++;
-                    } else if ((event.team === 'OPP' && event.throwUpResult === 'Won') ||
-                               (event.team === 'OUR' && event.throwUpResult === 'Lost')) {
+                    } else if (event.wonBy === 'OPP') {
                         possessionsOpp++;
                     }
                 }

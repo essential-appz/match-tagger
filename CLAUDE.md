@@ -62,7 +62,7 @@ Each event contains:
   shotLocation: "Inside 21m" | "21-45m" | "Beyond 45m",
   shotOutcome: "Goal" | "Point" | "Wide" | "Short" | "Saved" | "Blocked",
   // Throw Up:
-  throwUpResult: "Won" | "Lost"
+  wonBy: "OUR" | "OPP"
 }
 ```
 
@@ -86,8 +86,7 @@ Each event contains:
 - Shot Outcome: Goal, Point, Wide, Short, Saved, Blocked
 
 **Throw Up:**
-- Team: OUR, OPP
-- Result: Won, Lost
+- Won By: OUR, OPP
 
 ### UI Components
 

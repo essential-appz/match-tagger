@@ -62,8 +62,7 @@ Track all shot attempts with:
 
 ### Throw Up
 Track throw-up situations with:
-- **Team**: Which team the throw-up was for (Us/Opposition)
-- **Result**: Won, Lost
+- **Won By**: Which team won the throw-up (Us/Opposition)
 
 ## Workflow
 
