@@ -86,6 +86,51 @@
             margin-bottom: 10px;
         }
 
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            margin-bottom: 10px;
+            padding: 5px;
+            margin: -5px -5px 10px -5px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .section-header:hover {
+            background: #f5f5f5;
+        }
+
+        .section-header h2 {
+            margin: 0;
+        }
+
+        .collapse-icon {
+            font-size: 18px;
+            color: #666;
+            transition: transform 0.3s;
+        }
+
+        .collapse-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .section-content {
+            max-height: 2000px;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            overflow: hidden;
+            opacity: 1;
+        }
+
+        .section-content.collapsed {
+            max-height: 0 !important;
+            opacity: 0;
+            margin: 0;
+            padding: 0;
+        }
+
         /* Video Player */
         .video-container {
             position: relative;
@@ -622,8 +667,11 @@
         <div class="right-panel">
             <!-- Event Tagging Section -->
             <div class="section">
-        <h2>Tag Event</h2>
-
+                <div class="section-header" onclick="toggleSection('tagEventSection')">
+                    <h2>Tag Event</h2>
+                    <span class="collapse-icon" id="tagEventIcon">▼</span>
+                </div>
+                <div class="section-content" id="tagEventSection">
         <!-- Category Tabs -->
         <div class="category-tabs">
             <button class="category-tab" onclick="selectCategory('Kickouts')">Kickouts</button>
@@ -736,16 +784,22 @@
             </div>
         </div>
 
-        <button class="tag-event-btn" onclick="tagEvent()" id="tagEventBtn">
-            📌 Tag Event at Current Time
-        </button>
-    </div>
+                    <button class="tag-event-btn" onclick="tagEvent()" id="tagEventBtn">
+                        📌 Tag Event at Current Time
+                    </button>
+                </div>
+            </div>
 
             <!-- Events List -->
             <div class="section">
-                <h2>Tagged Events (<span id="eventListCount">0</span>)</h2>
-                <div class="events-list" id="eventsList">
-                    <div class="no-events">No events tagged yet. Load a video and start tagging!</div>
+                <div class="section-header" onclick="toggleSection('eventsListSection')">
+                    <h2>Tagged Events (<span id="eventListCount">0</span>)</h2>
+                    <span class="collapse-icon" id="eventsListIcon">▼</span>
+                </div>
+                <div class="section-content" id="eventsListSection">
+                    <div class="events-list" id="eventsList">
+                        <div class="no-events">No events tagged yet. Load a video and start tagging!</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -835,6 +889,40 @@
                 if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
                     e.preventDefault();
                     togglePlayPause();
+                }
+            });
+
+            // Restore collapsed states
+            restoreCollapsedStates();
+        }
+
+        // ============================================
+        // COLLAPSIBLE SECTIONS
+        // ============================================
+        function toggleSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            const icon = document.getElementById(sectionId.replace('Section', 'Icon'));
+
+            if (section.classList.contains('collapsed')) {
+                section.classList.remove('collapsed');
+                icon.classList.remove('collapsed');
+                localStorage.setItem(sectionId + 'Collapsed', 'false');
+            } else {
+                section.classList.add('collapsed');
+                icon.classList.add('collapsed');
+                localStorage.setItem(sectionId + 'Collapsed', 'true');
+            }
+        }
+
+        function restoreCollapsedStates() {
+            const sections = ['tagEventSection', 'eventsListSection'];
+            sections.forEach(sectionId => {
+                const isCollapsed = localStorage.getItem(sectionId + 'Collapsed') === 'true';
+                if (isCollapsed) {
+                    const section = document.getElementById(sectionId);
+                    const icon = document.getElementById(sectionId.replace('Section', 'Icon'));
+                    section.classList.add('collapsed');
+                    icon.classList.add('collapsed');
                 }
             });
         }
