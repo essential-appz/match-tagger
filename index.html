@@ -577,9 +577,14 @@
             <span class="video-time" id="videoTime">00:00 / 00:00</span>
         </div>
         <div class="video-offset">
-            <label>Game Start Offset:</label>
+            <label>1st Half Start:</label>
             <input type="text" id="offsetInput" placeholder="00:00" value="00:00" onchange="updateOffset()">
-            <span style="color: #666; font-size: 12px;">(Video time when game starts)</span>
+            <span style="color: #666; font-size: 12px;">(Video time when 1st half starts)</span>
+        </div>
+        <div class="video-offset">
+            <label>2nd Half Start:</label>
+            <input type="text" id="secondHalfOffsetInput" placeholder="30:00" value="" onchange="updateSecondHalfOffset()">
+            <span style="color: #666; font-size: 12px;">(Video time when 2nd half starts, leave empty if no 2nd half yet)</span>
         </div>
         <input type="file" id="videoFileInput" accept="video/*" style="display: none;" onchange="loadVideo(event)">
     </div>
@@ -809,7 +814,8 @@
         let currentEvent = {};
         let team1Name = 'Us';
         let team2Name = 'Opposition';
-        let videoOffset = 0; // seconds
+        let videoOffset = 0; // seconds - when 1st half starts
+        let secondHalfOffset = 0; // seconds - when 2nd half starts (0 = not set)
         let editingIndex = -1;
 
         const video = document.getElementById('videoPlayer');
@@ -847,10 +853,12 @@
                     team1Name = data.team1Name || 'Us';
                     team2Name = data.team2Name || 'Opposition';
                     videoOffset = data.videoOffset || 0;
+                    secondHalfOffset = data.secondHalfOffset || 0;
 
                     document.getElementById('team1Name').value = team1Name;
                     document.getElementById('team2Name').value = team2Name;
                     document.getElementById('offsetInput').value = formatTime(videoOffset);
+                    document.getElementById('secondHalfOffsetInput').value = secondHalfOffset > 0 ? formatTime(secondHalfOffset) : '';
                     document.getElementById('team1Label').textContent = team1Name;
                     document.getElementById('team2Label').textContent = team2Name;
                 } catch (e) {
@@ -865,6 +873,7 @@
                 team1Name,
                 team2Name,
                 videoOffset,
+                secondHalfOffset,
                 lastModified: new Date().toISOString()
             };
             localStorage.setItem('matchEvents', JSON.stringify(data));
@@ -910,8 +919,23 @@
             saveToStorage();
         }
 
+        function updateSecondHalfOffset() {
+            const input = document.getElementById('secondHalfOffsetInput').value;
+            secondHalfOffset = input ? parseTimeToSeconds(input) : 0;
+            saveToStorage();
+        }
+
         function getGameTime() {
-            return Math.max(0, Math.floor(video.currentTime) - videoOffset);
+            const videoTime = Math.floor(video.currentTime);
+
+            // If 2nd half offset is set and we're past it, calculate 2nd half time
+            if (secondHalfOffset > 0 && videoTime >= secondHalfOffset) {
+                // 2nd half: (video time - 2nd half offset) + 30 minutes
+                return Math.max(0, (videoTime - secondHalfOffset) + 1800);
+            }
+
+            // 1st half or 2nd half not set: (video time - 1st half offset)
+            return Math.max(0, videoTime - videoOffset);
         }
 
         // ============================================
