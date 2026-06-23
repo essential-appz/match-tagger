@@ -943,6 +943,11 @@
                                 <td id="shotsOpp">0</td>
                             </tr>
                             <tr>
+                                <td>Shot Efficiency</td>
+                                <td id="shotEfficiencyOur">0/0 (0%)</td>
+                                <td id="shotEfficiencyOpp">0/0 (0%)</td>
+                            </tr>
+                            <tr>
                                 <td>Productivity</td>
                                 <td id="productivityOur">-</td>
                                 <td id="productivityOpp">-</td>
@@ -1540,6 +1545,7 @@
         function updateProductivityMetrics() {
             // Initialize counters
             let shotsOur = 0, shotsOpp = 0;
+            let scoredShotsOur = 0, scoredShotsOpp = 0;
             let attacksOur = 0, attacksOpp = 0;
             let kickoutsOur = 0, kickoutsOpp = 0;
             let kickoutsWonOur = 0, kickoutsWonOpp = 0;
@@ -1562,8 +1568,19 @@
 
                 if (event.category === 'Shooting') {
                     // Count shots
-                    if (event.team === 'OUR') shotsOur++;
-                    else shotsOpp++;
+                    if (event.team === 'OUR') {
+                        shotsOur++;
+                        // Count scored shots (Goal, Point, 2-Pointer)
+                        if (['Goal', 'Point', '2-Pointer'].includes(event.shotOutcome)) {
+                            scoredShotsOur++;
+                        }
+                    } else {
+                        shotsOpp++;
+                        // Count scored shots (Goal, Point, 2-Pointer)
+                        if (['Goal', 'Point', '2-Pointer'].includes(event.shotOutcome)) {
+                            scoredShotsOpp++;
+                        }
+                    }
 
                     // Shots END possession
                     currentPossessionTeam = null;
@@ -1627,6 +1644,12 @@
             // Update Shots
             document.getElementById('shotsOur').textContent = shotsOur;
             document.getElementById('shotsOpp').textContent = shotsOpp;
+
+            // Update Shot Efficiency
+            const shotEfficiencyOurPct = shotsOur > 0 ? Math.round((scoredShotsOur / shotsOur) * 100) : 0;
+            const shotEfficiencyOppPct = shotsOpp > 0 ? Math.round((scoredShotsOpp / shotsOpp) * 100) : 0;
+            document.getElementById('shotEfficiencyOur').textContent = `${scoredShotsOur}/${shotsOur} (${shotEfficiencyOurPct}%)`;
+            document.getElementById('shotEfficiencyOpp').textContent = `${scoredShotsOpp}/${shotsOpp} (${shotEfficiencyOppPct}%)`;
 
             // Update Kickout Success
             const kickoutSuccessOurPct = kickoutsOur > 0 ? Math.round((kickoutsWonOur / kickoutsOur) * 100) : 0;
