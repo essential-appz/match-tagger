@@ -528,6 +528,42 @@
             font-size: 14px;
         }
 
+        /* Event Filters */
+        .event-filters {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .filter-select {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+
         /* Modal */
         .modal {
             display: none;
@@ -974,6 +1010,27 @@
                     <span class="collapse-icon" id="eventsListIcon">▼</span>
                 </div>
                 <div class="section-content" id="eventsListSection">
+                    <div class="event-filters">
+                        <div class="filter-group">
+                            <label>Category</label>
+                            <select class="filter-select" id="filterCategory" onchange="updateEventsList()">
+                                <option value="All">All</option>
+                                <option value="Kickouts">Kickouts</option>
+                                <option value="Turnovers">Turnovers</option>
+                                <option value="Shooting">Shooting</option>
+                                <option value="ThrowUp">Throw Up</option>
+                                <option value="Attack">Attack</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Team</label>
+                            <select class="filter-select" id="filterTeam" onchange="updateEventsList()">
+                                <option value="All">All</option>
+                                <option value="OUR">Us</option>
+                                <option value="OPP">Opposition</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="events-list" id="eventsList">
                         <div class="no-events">No events tagged yet. Load a video and start tagging!</div>
                     </div>
@@ -1370,18 +1427,34 @@
             const list = document.getElementById('eventsList');
             const count = document.getElementById('eventListCount');
 
-            count.textContent = events.length;
+            // Get filter values
+            const filterCategory = document.getElementById('filterCategory')?.value || 'All';
+            const filterTeam = document.getElementById('filterTeam')?.value || 'All';
 
-            if (events.length === 0) {
-                list.innerHTML = '<div class="no-events">No events tagged yet. Load a video and start tagging!</div>';
+            // Filter events
+            const filteredEvents = events.filter(event => {
+                const categoryMatch = filterCategory === 'All' || event.category === filterCategory;
+                const teamMatch = filterTeam === 'All' || event.team === filterTeam;
+                return categoryMatch && teamMatch;
+            });
+
+            count.textContent = filteredEvents.length;
+
+            if (filteredEvents.length === 0) {
+                if (events.length === 0) {
+                    list.innerHTML = '<div class="no-events">No events tagged yet. Load a video and start tagging!</div>';
+                } else {
+                    list.innerHTML = '<div class="no-events">No events match the selected filters.</div>';
+                }
                 return;
             }
 
             list.innerHTML = '';
             // Display events in reverse chronological order (newest first)
-            for (let i = events.length - 1; i >= 0; i--) {
-                const event = events[i];
-                const index = i;
+            for (let i = filteredEvents.length - 1; i >= 0; i--) {
+                const event = filteredEvents[i];
+                // Find the original index in the full events array
+                const index = events.indexOf(event);
 
                 const item = document.createElement('div');
                 item.className = 'event-item';
