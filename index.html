@@ -698,6 +698,59 @@
             background: #999;
         }
 
+        /* CSV Converter Styles */
+        .mapping-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .mapping-label {
+            flex: 1;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .mapping-label.required::after {
+            content: " *";
+            color: #f44336;
+        }
+
+        .mapping-select {
+            flex: 2;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .preview-table th,
+        .preview-table td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: left;
+        }
+
+        .preview-table th {
+            background: #2196F3;
+            color: white;
+            font-weight: bold;
+        }
+
+        .preview-table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
         .video-upload {
             border: 2px dashed #ddd;
             padding: 20px;
@@ -822,13 +875,17 @@
     <!-- Controls -->
     <div class="controls">
         <button class="control-btn primary" onclick="generateReport()">Generate Report</button>
+        <button class="control-btn primary" onclick="document.getElementById('aggregatedCsvImport').click()">Aggregated Match Report</button>
         <button class="control-btn primary" onclick="extractMatchData()">Extract Match Data</button>
         <button class="control-btn primary" onclick="downloadCSV()">Download CSV</button>
         <button class="control-btn primary" onclick="document.getElementById('csvImport').click()">Import CSV</button>
+        <button class="control-btn primary" onclick="openCsvConverter()">Convert CSV</button>
         <button class="control-btn danger" onclick="clearAllEvents()">Clear All</button>
     </div>
 
     <input type="file" id="csvImport" accept=".csv" style="display: none;" onchange="importCSV(event)">
+    <input type="file" id="aggregatedCsvImport" accept=".csv" multiple style="display: none;" onchange="generateAggregatedReport(event)">
+    <input type="file" id="csvConverterInput" accept=".csv" style="display: none;" onchange="loadSourceCsv(event)">
         </div>
         <!-- End Left Panel -->
 
@@ -939,6 +996,14 @@
                     <button class="option-btn" data-field="shotLocation" data-value="Inside 21m" onclick="selectOption(this)">Inside 21m</button>
                     <button class="option-btn" data-field="shotLocation" data-value="21-45m" onclick="selectOption(this)">21-45m</button>
                     <button class="option-btn" data-field="shotLocation" data-value="Beyond 45m" onclick="selectOption(this)">Beyond 45m</button>
+                </div>
+            </div>
+            <div class="option-group">
+                <label>Shot Position</label>
+                <div class="button-group">
+                    <button class="option-btn" data-field="shotPosition" data-value="Left" onclick="selectOption(this)">Left</button>
+                    <button class="option-btn" data-field="shotPosition" data-value="Center" onclick="selectOption(this)">Center</button>
+                    <button class="option-btn" data-field="shotPosition" data-value="Right" onclick="selectOption(this)">Right</button>
                 </div>
             </div>
             <div class="option-group">
@@ -1109,6 +1174,51 @@
             <div class="modal-buttons">
                 <button class="modal-btn primary" onclick="saveEditedEvent()">Save Changes</button>
                 <button class="modal-btn secondary" onclick="closeEditModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSV Converter Modal -->
+    <div id="csvConverterModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2>🔄 Convert CSV to Match Tagger Format</h2>
+                <button class="modal-close" onclick="closeCsvConverter()">&times;</button>
+            </div>
+
+            <div id="csvConverterContent">
+                <!-- Step 1: File Selection -->
+                <div id="converterStep1" class="converter-step">
+                    <p style="color: #666; margin-bottom: 15px;">
+                        Select a CSV file to convert to Match Tagger format. You'll be able to map columns and preview the conversion.
+                    </p>
+                    <button class="control-btn primary" onclick="document.getElementById('csvConverterInput').click()">
+                        📁 Select CSV File
+                    </button>
+                    <div id="sourceFileName" style="margin-top: 10px; color: #666; font-style: italic;"></div>
+                </div>
+
+                <!-- Step 2: Column Mapping -->
+                <div id="converterStep2" class="converter-step" style="display: none;">
+                    <h3 style="margin-top: 0;">Map Your Columns</h3>
+                    <p style="color: #666; margin-bottom: 15px;">
+                        Map columns from your CSV to Match Tagger fields. Required fields are marked with *.
+                    </p>
+                    <div id="columnMappings" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px;"></div>
+
+                    <h3 style="margin-top: 20px;">Preview (First 5 Rows)</h3>
+                    <div id="conversionPreview" style="max-height: 200px; overflow: auto; margin-bottom: 20px;"></div>
+                </div>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="modal-btn primary" id="convertImportBtn" onclick="convertAndImport()" style="display: none;">
+                    ✅ Convert & Import
+                </button>
+                <button class="modal-btn primary" id="convertDownloadBtn" onclick="convertAndDownload()" style="display: none;">
+                    💾 Convert & Download
+                </button>
+                <button class="modal-btn secondary" onclick="closeCsvConverter()">Cancel</button>
             </div>
         </div>
     </div>
@@ -1596,23 +1706,42 @@
             const container = document.getElementById('editOptionsContainer');
             container.innerHTML = '';
 
-            Object.keys(event).forEach(key => {
-                if (!['category', 'videoTime', 'gameTime', 'gameTimeFormatted', 'timestamp'].includes(key)) {
-                    const group = document.createElement('div');
-                    group.className = 'form-group';
+            // Define all possible fields for each category
+            const categoryFields = {
+                'Kickouts': ['team', 'teamName', 'kickoutType', 'kickoutResult', 'kickoutLocation'],
+                'Turnovers': ['turnoverWonBy', 'teamName', 'turnoverType', 'turnoverLocation'],
+                'Shooting': ['team', 'teamName', 'shotType', 'shotLocation', 'shotPosition', 'shotOutcome'],
+                'ThrowUp': ['wonBy', 'teamName'],
+                'Attack': ['team', 'teamName']
+            };
 
-                    const label = document.createElement('label');
-                    label.textContent = key;
+            // Get fields to display based on category
+            let fieldsToShow = categoryFields[event.category] || [];
 
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.value = event[key];
-                    input.dataset.field = key;
+            // If category not recognized, show all existing fields
+            if (fieldsToShow.length === 0) {
+                fieldsToShow = Object.keys(event).filter(key =>
+                    !['category', 'videoTime', 'gameTime', 'gameTimeFormatted', 'timestamp'].includes(key)
+                );
+            }
 
-                    group.appendChild(label);
-                    group.appendChild(input);
-                    container.appendChild(group);
-                }
+            // Create input for each field
+            fieldsToShow.forEach(key => {
+                const group = document.createElement('div');
+                group.className = 'form-group';
+
+                const label = document.createElement('label');
+                label.textContent = key;
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = event[key] || ''; // Use existing value or empty string
+                input.dataset.field = key;
+                input.placeholder = `Enter ${key}`;
+
+                group.appendChild(label);
+                group.appendChild(input);
+                container.appendChild(group);
             });
 
             document.getElementById('editEventModal').classList.add('active');
@@ -2052,9 +2181,780 @@
         }
 
         // ============================================
+        // CSV CONVERTER
+        // ============================================
+        let converterSourceData = null;
+        let converterMappings = {};
+        let converterMode = 'standard'; // 'standard' or 'shooting-wide'
+
+        function openCsvConverter() {
+            console.log('openCsvConverter called');
+            const modal = document.getElementById('csvConverterModal');
+            console.log('Modal element:', modal);
+
+            if (!modal) {
+                console.error('csvConverterModal not found!');
+                alert('Error: Converter modal not found. Please refresh the page.');
+                return;
+            }
+
+            modal.classList.add('active');
+            console.log('Modal classes:', modal.className);
+
+            // Reset to step 1
+            document.getElementById('converterStep1').style.display = 'block';
+            document.getElementById('converterStep2').style.display = 'none';
+            document.getElementById('convertImportBtn').style.display = 'none';
+            document.getElementById('convertDownloadBtn').style.display = 'none';
+            document.getElementById('sourceFileName').textContent = '';
+            converterSourceData = null;
+            converterMappings = {};
+
+            console.log('Converter opened successfully');
+        }
+
+        function closeCsvConverter() {
+            document.getElementById('csvConverterModal').classList.remove('active');
+        }
+
+        function loadSourceCsv(event) {
+            console.log('loadSourceCsv called', event);
+            const file = event.target.files[0];
+            console.log('Selected file:', file);
+
+            if (!file) {
+                console.log('No file selected');
+                return;
+            }
+
+            document.getElementById('sourceFileName').textContent = `Loading ${file.name}...`;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                console.log('File read successfully');
+                try {
+                    const csvText = e.target.result;
+                    const lines = csvText.split('\n').filter(line => line.trim());
+
+                    if (lines.length < 2) {
+                        alert('CSV file is empty or has no data rows!');
+                        return;
+                    }
+
+                    // Parse CSV headers and data
+                    const headers = parseCSVLine(lines[0]);
+                    const data = [];
+
+                    for (let i = 1; i < lines.length; i++) {
+                        const values = parseCSVLine(lines[i]);
+                        if (values.length > 0) {
+                            const row = {};
+                            headers.forEach((header, idx) => {
+                                row[header] = values[idx] || '';
+                            });
+                            data.push(row);
+                        }
+                    }
+
+                    converterSourceData = {
+                        filename: file.name,
+                        headers: headers,
+                        data: data
+                    };
+
+                    // Detect if this is shooting-wide format
+                    const headersLower = headers.map(h => h.toLowerCase());
+                    const hasShootingColumns =
+                        (headersLower.some(h => h.includes('goal')) &&
+                         headersLower.some(h => h.includes('point')) &&
+                         headersLower.some(h => h.includes('wide'))) ||
+                        (headersLower.some(h => h.includes('1-point')) &&
+                         headersLower.some(h => h.includes('2-point')));
+
+                    if (hasShootingColumns) {
+                        converterMode = 'shooting-wide';
+                    } else {
+                        converterMode = 'standard';
+                    }
+
+                    // Initialize default mappings
+                    initializeColumnMappings();
+
+                    // Show step 2
+                    document.getElementById('sourceFileName').textContent = `✓ Loaded ${file.name} (${data.length} rows)`;
+                    document.getElementById('converterStep1').style.display = 'none';
+                    document.getElementById('converterStep2').style.display = 'block';
+                    document.getElementById('convertImportBtn').style.display = 'inline-block';
+                    document.getElementById('convertDownloadBtn').style.display = 'inline-block';
+
+                } catch (err) {
+                    alert('Error reading CSV: ' + err.message);
+                    console.error(err);
+                }
+            };
+
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function parseCSVLine(line) {
+            const values = [];
+            let current = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    values.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            values.push(current.trim());
+
+            return values.map(v => v.replace(/^"|"$/g, ''));
+        }
+
+        function initializeColumnMappings() {
+            if (converterMode === 'shooting-wide') {
+                initializeShootingWideMappings();
+                return;
+            }
+
+            // Define Match Tagger required and optional fields
+            const matchTaggerFields = {
+                required: [
+                    { key: 'gameTime', label: 'Game Time', description: 'Required: MM:SS format' },
+                    { key: 'videoTime', label: 'Video Time', description: 'Required: MM:SS format' },
+                    { key: 'category', label: 'Category', description: 'Required: Kickouts, Turnovers, Shooting, ThrowUp, Attack' },
+                    { key: 'team', label: 'Team', description: 'Required: OUR or OPP' },
+                    { key: 'teamName', label: 'Team Name', description: 'Required: Team name' }
+                ],
+                optional: [
+                    { key: 'kickoutType', label: 'Kickout Type', description: 'For Kickouts: Short, Medium, Long' },
+                    { key: 'kickoutResult', label: 'Kickout Result', description: 'For Kickouts: Won, Lost, Breaking Ball, Contested' },
+                    { key: 'kickoutLocation', label: 'Kickout Location', description: 'For Kickouts: Left, Center, Right' },
+                    { key: 'turnoverType', label: 'Turnover Type', description: 'For Turnovers' },
+                    { key: 'turnoverLocation', label: 'Turnover Location', description: 'For Turnovers' },
+                    { key: 'turnoverWonBy', label: 'Turnover Won By', description: 'For Turnovers: OUR or OPP' },
+                    { key: 'shotType', label: 'Shot Type', description: 'For Shooting: Free, Play, 45, Penalty' },
+                    { key: 'shotLocation', label: 'Shot Location', description: 'For Shooting: Inside 21m, 21-45m, Beyond 45m' },
+                    { key: 'shotPosition', label: 'Shot Position', description: 'For Shooting: Left, Center, Right' },
+                    { key: 'shotOutcome', label: 'Shot Outcome', description: 'For Shooting: Goal, Point, Wide, Short, Saved, Blocked, 2-Pointer' },
+                    { key: 'wonBy', label: 'Won By', description: 'For ThrowUp: OUR or OPP' }
+                ]
+            };
+
+            // Try to auto-detect mappings
+            converterMappings = {};
+            const sourceHeaders = converterSourceData.headers.map(h => h.toLowerCase());
+
+            // Auto-map based on common column names
+            [...matchTaggerFields.required, ...matchTaggerFields.optional].forEach(field => {
+                const fieldLower = field.label.toLowerCase();
+                const keyLower = field.key.toLowerCase();
+
+                // Try exact match first
+                let matchIndex = sourceHeaders.indexOf(fieldLower);
+                if (matchIndex === -1) {
+                    matchIndex = sourceHeaders.indexOf(keyLower);
+                }
+                if (matchIndex === -1) {
+                    // Try partial match
+                    matchIndex = sourceHeaders.findIndex(h => h.includes(fieldLower) || fieldLower.includes(h));
+                }
+
+                if (matchIndex !== -1) {
+                    converterMappings[field.key] = converterSourceData.headers[matchIndex];
+                } else {
+                    converterMappings[field.key] = '';
+                }
+            });
+
+            // Render mapping UI
+            renderColumnMappings(matchTaggerFields);
+            updatePreview();
+        }
+
+        function renderColumnMappings(matchTaggerFields) {
+            const container = document.getElementById('columnMappings');
+            container.innerHTML = '';
+
+            const sourceOptions = ['', ...converterSourceData.headers];
+
+            // Required fields
+            matchTaggerFields.required.forEach(field => {
+                const row = document.createElement('div');
+                row.className = 'mapping-row';
+
+                const label = document.createElement('div');
+                label.className = 'mapping-label required';
+                label.textContent = field.label;
+                label.title = field.description;
+
+                const select = document.createElement('select');
+                select.className = 'mapping-select';
+                select.dataset.field = field.key;
+
+                sourceOptions.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt;
+                    option.textContent = opt || '-- Not Mapped --';
+                    if (opt === converterMappings[field.key]) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+
+                select.onchange = (e) => {
+                    converterMappings[field.key] = e.target.value;
+                    updatePreview();
+                };
+
+                row.appendChild(label);
+                row.appendChild(select);
+                container.appendChild(row);
+            });
+
+            // Optional fields
+            const optionalHeader = document.createElement('h4');
+            optionalHeader.textContent = 'Optional Category-Specific Fields';
+            optionalHeader.style.marginTop = '15px';
+            optionalHeader.style.marginBottom = '10px';
+            container.appendChild(optionalHeader);
+
+            matchTaggerFields.optional.forEach(field => {
+                const row = document.createElement('div');
+                row.className = 'mapping-row';
+
+                const label = document.createElement('div');
+                label.className = 'mapping-label';
+                label.textContent = field.label;
+                label.title = field.description;
+
+                const select = document.createElement('select');
+                select.className = 'mapping-select';
+                select.dataset.field = field.key;
+
+                sourceOptions.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt;
+                    option.textContent = opt || '-- Not Mapped --';
+                    if (opt === converterMappings[field.key]) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+
+                select.onchange = (e) => {
+                    converterMappings[field.key] = e.target.value;
+                    updatePreview();
+                };
+
+                row.appendChild(label);
+                row.appendChild(select);
+                container.appendChild(row);
+            });
+        }
+
+        function updatePreview() {
+            const container = document.getElementById('conversionPreview');
+
+            if (!converterSourceData || converterSourceData.data.length === 0) {
+                container.innerHTML = '<p>No data to preview</p>';
+                return;
+            }
+
+            // Convert first 5 rows
+            const previewRows = converterSourceData.data.slice(0, 5);
+            const converted = previewRows.map(row => convertRow(row));
+
+            // Build preview table
+            const table = document.createElement('table');
+            table.className = 'preview-table';
+
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            ['Game Time', 'Video Time', 'Category', 'Team', 'Team Name', 'Other Fields'].forEach(h => {
+                const th = document.createElement('th');
+                th.textContent = h;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            converted.forEach(row => {
+                const tr = document.createElement('tr');
+
+                const tdGameTime = document.createElement('td');
+                tdGameTime.textContent = row.gameTimeFormatted || '';
+                tdGameTime.style.color = row.gameTimeFormatted ? '#000' : '#f44336';
+                tr.appendChild(tdGameTime);
+
+                const tdVideoTime = document.createElement('td');
+                tdVideoTime.textContent = row.videoTime ? formatTime(row.videoTime) : '';
+                tdVideoTime.style.color = row.videoTime ? '#000' : '#f44336';
+                tr.appendChild(tdVideoTime);
+
+                const tdCategory = document.createElement('td');
+                tdCategory.textContent = row.category || '';
+                tdCategory.style.color = row.category ? '#000' : '#f44336';
+                tr.appendChild(tdCategory);
+
+                const tdTeam = document.createElement('td');
+                tdTeam.textContent = row.team || '';
+                tdTeam.style.color = row.team ? '#000' : '#f44336';
+                tr.appendChild(tdTeam);
+
+                const tdTeamName = document.createElement('td');
+                tdTeamName.textContent = row.teamName || '';
+                tdTeamName.style.color = row.teamName ? '#000' : '#f44336';
+                tr.appendChild(tdTeamName);
+
+                const tdOther = document.createElement('td');
+                const otherFields = Object.keys(row).filter(k =>
+                    !['gameTime', 'gameTimeFormatted', 'videoTime', 'category', 'team', 'teamName', 'timestamp'].includes(k)
+                );
+                tdOther.textContent = otherFields.map(k => `${k}: ${row[k]}`).join(', ');
+                tr.appendChild(tdOther);
+
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+
+            container.innerHTML = '';
+            container.appendChild(table);
+        }
+
+        function initializeShootingWideMappings() {
+            // For shooting-wide format, we need different mappings
+            const shootingFields = {
+                required: [
+                    { key: 'time', label: 'Time', description: 'Required: Time of shot' },
+                    { key: 'opponents', label: 'Opponents/Team Name', description: 'Required: Opponent team name' },
+                    { key: 'zone', label: 'Zone/Shot Location', description: 'Optional: Zone where shot was taken' }
+                ],
+                outcomeColumns: []
+            };
+
+            // Auto-detect outcome columns (Goal, 2-Point Play, 1-Point Play, Wide, etc.)
+            const sourceHeaders = converterSourceData.headers;
+            const headersLower = sourceHeaders.map(h => h.toLowerCase());
+
+            // Identify columns that represent shot outcomes
+            const outcomeKeywords = ['goal', 'point', 'wide', 'short', 'saved', 'blocked', 'post'];
+            sourceHeaders.forEach((header, idx) => {
+                const headerLower = headersLower[idx];
+                if (outcomeKeywords.some(keyword => headerLower.includes(keyword))) {
+                    shootingFields.outcomeColumns.push(header);
+                }
+            });
+
+            // Initialize mappings
+            converterMappings = {
+                time: '',
+                opponents: '',
+                zone: '',
+                outcomeColumns: []
+            };
+
+            // Auto-map
+            sourceHeaders.forEach(header => {
+                const headerLower = header.toLowerCase();
+                if (headerLower.includes('time')) {
+                    converterMappings.time = header;
+                } else if (headerLower.includes('opponent') || headerLower.includes('team')) {
+                    converterMappings.opponents = header;
+                } else if (headerLower.includes('zone') || headerLower.includes('location')) {
+                    converterMappings.zone = header;
+                }
+            });
+
+            converterMappings.outcomeColumns = shootingFields.outcomeColumns;
+
+            // Render UI
+            renderShootingWideMappings(shootingFields);
+            updatePreview();
+        }
+
+        function renderShootingWideMappings(shootingFields) {
+            const container = document.getElementById('columnMappings');
+            container.innerHTML = '';
+
+            // Add mode indicator
+            const modeInfo = document.createElement('div');
+            modeInfo.style.background = '#e3f2fd';
+            modeInfo.style.padding = '10px';
+            modeInfo.style.borderRadius = '4px';
+            modeInfo.style.marginBottom = '15px';
+            modeInfo.innerHTML = `
+                <strong>📊 Shooting Statistics Mode Detected</strong><br>
+                <span style="color: #666; font-size: 13px;">
+                    Your CSV appears to contain shooting statistics in wide format.
+                    The converter will automatically set Category=Shooting and Team=OPP for all rows.
+                </span>
+            `;
+            container.appendChild(modeInfo);
+
+            const sourceOptions = ['', ...converterSourceData.headers];
+
+            // Required mappings
+            shootingFields.required.forEach(field => {
+                const row = document.createElement('div');
+                row.className = 'mapping-row';
+
+                const label = document.createElement('div');
+                label.className = 'mapping-label';
+                if (field.key !== 'zone') {
+                    label.className += ' required';
+                }
+                label.textContent = field.label;
+                label.title = field.description;
+
+                const select = document.createElement('select');
+                select.className = 'mapping-select';
+                select.dataset.field = field.key;
+
+                sourceOptions.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt;
+                    option.textContent = opt || '-- Not Mapped --';
+                    if (opt === converterMappings[field.key]) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+
+                select.onchange = (e) => {
+                    converterMappings[field.key] = e.target.value;
+                    updatePreview();
+                };
+
+                row.appendChild(label);
+                row.appendChild(select);
+                container.appendChild(row);
+            });
+
+            // Outcome columns info
+            const outcomeHeader = document.createElement('h4');
+            outcomeHeader.textContent = 'Detected Outcome Columns';
+            outcomeHeader.style.marginTop = '15px';
+            outcomeHeader.style.marginBottom = '10px';
+            container.appendChild(outcomeHeader);
+
+            const outcomeInfo = document.createElement('div');
+            outcomeInfo.style.background = '#f9f9f9';
+            outcomeInfo.style.padding = '10px';
+            outcomeInfo.style.borderRadius = '4px';
+            outcomeInfo.style.fontSize = '13px';
+            outcomeInfo.innerHTML = `
+                The following columns will be checked for shot outcomes (whichever column has a value for each row):<br>
+                <strong>${shootingFields.outcomeColumns.join(', ')}</strong>
+            `;
+            container.appendChild(outcomeInfo);
+        }
+
+        function convertShootingWideRow(sourceRow) {
+            const converted = {};
+
+            // Fixed fields for shooting data
+            converted.category = 'Shooting';
+            converted.team = 'OPP';
+
+            // Map time
+            const timeField = converterMappings.time;
+            if (timeField && sourceRow[timeField]) {
+                const timeValue = sourceRow[timeField];
+                converted.gameTimeFormatted = normalizeTimeFormat(timeValue);
+                converted.gameTime = parseTimeToSeconds(converted.gameTimeFormatted);
+                converted.videoTime = converted.gameTime; // Same value for both
+            }
+
+            // Map team name
+            const opponentsField = converterMappings.opponents;
+            if (opponentsField && sourceRow[opponentsField]) {
+                converted.teamName = sourceRow[opponentsField];
+            }
+
+            // Map zone to shot location
+            const zoneField = converterMappings.zone;
+            if (zoneField && sourceRow[zoneField]) {
+                const zone = sourceRow[zoneField];
+                // Try to map zone to Match Tagger shot locations
+                converted.shotLocation = mapZoneToShotLocation(zone);
+            }
+
+            // Determine shot outcome and type from outcome columns
+            const outcomeData = determineShootingOutcome(sourceRow);
+            if (outcomeData.outcome) {
+                converted.shotOutcome = outcomeData.outcome;
+            }
+            if (outcomeData.type) {
+                converted.shotType = outcomeData.type;
+            }
+
+            // Add timestamp
+            converted.timestamp = new Date().toISOString();
+
+            return converted;
+        }
+
+        function mapZoneToShotLocation(zone) {
+            if (!zone) return '';
+
+            const zoneLower = zone.toLowerCase();
+
+            // Try to match to Match Tagger zones
+            if (zoneLower.includes('21') || zoneLower.includes('close') || zoneLower.includes('near')) {
+                return 'Inside 21m';
+            } else if (zoneLower.includes('45') && !zoneLower.includes('beyond')) {
+                return '21-45m';
+            } else if (zoneLower.includes('beyond') || zoneLower.includes('long') || zoneLower.includes('far')) {
+                return 'Beyond 45m';
+            }
+
+            // Otherwise return as-is
+            return zone;
+        }
+
+        function determineShootingOutcome(sourceRow) {
+            const result = { outcome: '', type: '' };
+
+            // Check each outcome column
+            const outcomeColumns = converterMappings.outcomeColumns || [];
+
+            for (const col of outcomeColumns) {
+                const value = sourceRow[col];
+
+                // Check if this column has a value (could be 1, "yes", "x", etc.)
+                if (value && value.toString().trim() !== '' && value.toString().trim() !== '0') {
+                    const colLower = col.toLowerCase();
+
+                    // Determine outcome
+                    if (colLower.includes('goal')) {
+                        result.outcome = 'Goal';
+                    } else if (colLower.includes('2-point') || colLower.includes('2 point')) {
+                        result.outcome = '2-Pointer';
+                    } else if (colLower.includes('1-point') || colLower.includes('1 point')) {
+                        result.outcome = 'Point';
+                    } else if (colLower.includes('point') && !colLower.includes('2')) {
+                        result.outcome = 'Point';
+                    } else if (colLower.includes('wide')) {
+                        result.outcome = 'Wide';
+                    } else if (colLower.includes('short')) {
+                        result.outcome = 'Short';
+                    } else if (colLower.includes('saved') || colLower.includes('save')) {
+                        result.outcome = 'Saved';
+                    } else if (colLower.includes('blocked') || colLower.includes('block')) {
+                        result.outcome = 'Blocked';
+                    } else if (colLower.includes('post')) {
+                        result.outcome = 'Wide'; // Treat post as wide
+                    }
+
+                    // Determine type (Play vs Free)
+                    if (colLower.includes('free')) {
+                        result.type = 'Free';
+                    } else if (colLower.includes('play')) {
+                        result.type = 'Play';
+                    }
+
+                    // If we found an outcome, stop looking
+                    if (result.outcome) {
+                        break;
+                    }
+                }
+            }
+
+            // Default type if not specified
+            if (!result.type && result.outcome) {
+                result.type = 'Play';
+            }
+
+            return result;
+        }
+
+        function convertRow(sourceRow) {
+            if (converterMode === 'shooting-wide') {
+                return convertShootingWideRow(sourceRow);
+            }
+
+            const converted = {};
+
+            // Map all fields
+            Object.keys(converterMappings).forEach(targetField => {
+                const sourceField = converterMappings[targetField];
+                if (sourceField && sourceRow[sourceField] !== undefined) {
+                    converted[targetField] = sourceRow[sourceField];
+                }
+            });
+
+            // Handle time conversions
+            if (converted.gameTime) {
+                converted.gameTimeFormatted = normalizeTimeFormat(converted.gameTime);
+                converted.gameTime = parseTimeToSeconds(converted.gameTimeFormatted);
+            }
+            if (converted.videoTime) {
+                const normalized = normalizeTimeFormat(converted.videoTime);
+                converted.videoTime = parseTimeToSeconds(normalized);
+            }
+
+            // Add timestamp
+            converted.timestamp = new Date().toISOString();
+
+            return converted;
+        }
+
+        function normalizeTimeFormat(timeStr) {
+            if (!timeStr) return '00:00';
+
+            // Already in MM:SS format
+            if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
+                const parts = timeStr.split(':');
+                return `${parts[0].padStart(2, '0')}:${parts[1]}`;
+            }
+
+            // Seconds only (e.g., "123")
+            if (/^\d+$/.test(timeStr)) {
+                const seconds = parseInt(timeStr);
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+
+            // HH:MM:SS format
+            if (/^\d{1,2}:\d{2}:\d{2}$/.test(timeStr)) {
+                const parts = timeStr.split(':');
+                const totalSeconds = parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
+                const mins = Math.floor(totalSeconds / 60);
+                const secs = totalSeconds % 60;
+                return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+
+            return '00:00';
+        }
+
+        function convertAndImport() {
+            // Validate required mappings based on mode
+            let missing = [];
+            if (converterMode === 'shooting-wide') {
+                const required = ['time', 'opponents'];
+                missing = required.filter(field => !converterMappings[field] || converterMappings[field] === '');
+            } else {
+                const required = ['gameTime', 'videoTime', 'category', 'team', 'teamName'];
+                missing = required.filter(field => !converterMappings[field] || converterMappings[field] === '');
+            }
+
+            if (missing.length > 0) {
+                alert(`Please map these required fields: ${missing.join(', ')}`);
+                return;
+            }
+
+            // Convert all rows
+            const converted = converterSourceData.data.map(row => convertRow(row));
+
+            // Validate converted data
+            const invalid = converted.filter(row =>
+                !row.gameTimeFormatted || !row.videoTime || !row.category || !row.team || !row.teamName
+            );
+
+            if (invalid.length > 0) {
+                if (!confirm(`${invalid.length} rows have missing required fields and will be skipped. Continue?`)) {
+                    return;
+                }
+            }
+
+            const valid = converted.filter(row =>
+                row.gameTimeFormatted && row.videoTime && row.category && row.team && row.teamName
+            );
+
+            if (valid.length === 0) {
+                alert('No valid rows to import!');
+                return;
+            }
+
+            if (confirm(`Import ${valid.length} events? This will replace current data.`)) {
+                events = valid;
+                updateUI();
+                updateScoreboard();
+                updateEventsList();
+                saveToStorage();
+                closeCsvConverter();
+                alert(`Successfully imported ${valid.length} events!`);
+            }
+        }
+
+        function convertAndDownload() {
+            // Validate required mappings based on mode
+            let missing = [];
+            if (converterMode === 'shooting-wide') {
+                const required = ['time', 'opponents'];
+                missing = required.filter(field => !converterMappings[field] || converterMappings[field] === '');
+            } else {
+                const required = ['gameTime', 'videoTime', 'category', 'team', 'teamName'];
+                missing = required.filter(field => !converterMappings[field] || converterMappings[field] === '');
+            }
+
+            if (missing.length > 0) {
+                alert(`Please map these required fields: ${missing.join(', ')}`);
+                return;
+            }
+
+            // Convert all rows
+            const converted = converterSourceData.data.map(row => convertRow(row));
+
+            // Build CSV
+            let csv = 'Event#,Game Time,Video Time,Category,Team,Team Name';
+
+            // Add all unique fields from converted events
+            const fields = new Set();
+            converted.forEach(event => {
+                Object.keys(event).forEach(key => {
+                    if (!['gameTime', 'gameTimeFormatted', 'videoTime', 'category', 'team', 'teamName', 'timestamp'].includes(key)) {
+                        fields.add(key);
+                    }
+                });
+            });
+            fields.forEach(field => csv += `,${field}`);
+            csv += '\n';
+
+            converted.forEach((event, idx) => {
+                const row = [
+                    idx + 1,
+                    event.gameTimeFormatted || '',
+                    event.videoTime ? formatTime(event.videoTime) : '',
+                    event.category || '',
+                    event.team || '',
+                    event.teamName || ''
+                ];
+
+                fields.forEach(field => {
+                    row.push(event[field] || '');
+                });
+
+                csv += row.map(v => `"${v}"`).join(',') + '\n';
+            });
+
+            // Download
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `converted-${converterSourceData.filename}`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            alert(`Successfully converted ${converted.length} events! File downloaded.`);
+        }
+
+        // ============================================
         // REPORT GENERATION
         // ============================================
-        function calculateReportStats() {
+        function calculateReportStats(eventsToAnalyze = null) {
+            const eventsData = eventsToAnalyze || events;
             const stats = {
                 our: {
                     kickouts: { total: 0, won: 0, lost: 0, successRate: 0 },
@@ -2086,7 +2986,7 @@
             let possessionsOur = 0, possessionsOpp = 0;
             let attacksOur = 0, attacksOpp = 0;
 
-            events.forEach(event => {
+            eventsData.forEach(event => {
                 const isOur = event.team === 'OUR' || event.turnoverWonBy === 'OUR' || event.wonBy === 'OUR';
                 const team = isOur ? 'our' : 'opp';
 
@@ -2253,11 +3153,151 @@
             }
 
             const stats = calculateReportStats();
+            const reportHTML = generateReportHTML(stats);
 
-            // Open report in new window
-            const reportWindow = window.open('', '_blank');
-            reportWindow.document.write(generateReportHTML(stats));
-            reportWindow.document.close();
+            // Create blob and open in new tab
+            const blob = new Blob([reportHTML], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+
+            // Open in new tab
+            window.open(url, '_blank');
+
+            // Clean up after a delay
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        async function generateAggregatedReport(event) {
+            console.log('generateAggregatedReport called');
+            const files = Array.from(event.target.files);
+            console.log('Files selected:', files.length);
+
+            if (files.length === 0) {
+                alert('No CSV files selected!');
+                return;
+            }
+
+            try {
+                console.log('Starting to process files...');
+                // Read and parse all CSV files
+                const allEvents = [];
+
+                for (const file of files) {
+                    const csvData = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.onerror = (e) => reject(e);
+                        reader.readAsText(file);
+                    });
+
+                    // Parse CSV (handle quoted values properly)
+                    const lines = csvData.split('\n');
+                    if (lines.length < 2) {
+                        continue; // Skip empty files
+                    }
+
+                    const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
+
+                    for (let i = 1; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
+
+                        // Split by comma but respect quotes
+                        const values = [];
+                        let current = '';
+                        let inQuotes = false;
+
+                        for (let j = 0; j < line.length; j++) {
+                            const char = line[j];
+                            if (char === '"') {
+                                inQuotes = !inQuotes;
+                            } else if (char === ',' && !inQuotes) {
+                                values.push(current.trim());
+                                current = '';
+                            } else {
+                                current += char;
+                            }
+                        }
+                        values.push(current.trim()); // Push last value
+
+                        const eventObj = {};
+                        headers.forEach((header, index) => {
+                            const value = values[index] || '';
+                            eventObj[header] = value.replace(/"/g, '');
+                        });
+
+                        // Handle time fields - CSV has "Game Time" and "Video Time" in MM:SS format
+                        if (eventObj['Game Time']) {
+                            eventObj.gameTimeFormatted = eventObj['Game Time'];
+                            eventObj.gameTime = parseTimeToSeconds(eventObj['Game Time']);
+                        }
+                        if (eventObj['Video Time']) {
+                            eventObj.videoTime = parseTimeToSeconds(eventObj['Video Time']);
+                        }
+
+                        // Map CSV headers to internal field names
+                        if (eventObj['Category']) eventObj.category = eventObj['Category'];
+                        if (eventObj['Team']) eventObj.team = eventObj['Team'];
+                        if (eventObj['Team Name']) eventObj.teamName = eventObj['Team Name'];
+
+                        // Only add if it has a category (valid event)
+                        if (eventObj.category) {
+                            allEvents.push(eventObj);
+                        }
+                    }
+                }
+
+                console.log('Total events parsed:', allEvents.length);
+
+                if (allEvents.length === 0) {
+                    alert('No events found in the selected CSV files!');
+                    return;
+                }
+
+                // Temporarily store current events and replace with aggregated events
+                // This allows the visualization functions to use the aggregated data
+                const originalEvents = events;
+                events = allEvents;
+
+                try {
+                    console.log('Calculating stats...');
+                    // Calculate stats from aggregated events
+                    const stats = calculateReportStats(allEvents);
+                    console.log('Stats calculated:', stats);
+
+                    // Generate report with aggregated title
+                    console.log('Generating report HTML...');
+                    const reportHTML = generateReportHTML(stats, true, files.length);
+                    console.log('Report HTML generated, length:', reportHTML.length);
+
+                    // Create blob and open in new tab
+                    const blob = new Blob([reportHTML], { type: 'text/html' });
+                    const url = URL.createObjectURL(blob);
+                    console.log('Blob URL created:', url);
+
+                    // Open in new tab
+                    console.log('Opening new tab...');
+                    const newWindow = window.open(url, '_blank');
+                    console.log('New window opened:', newWindow ? 'success' : 'blocked');
+
+                    // Clean up after a delay
+                    setTimeout(() => URL.revokeObjectURL(url), 1000);
+                } finally {
+                    // Always restore original events, even if there's an error
+                    events = originalEvents;
+                    console.log('Original events restored');
+                }
+
+                // Clear the file input for next use
+                event.target.value = '';
+                console.log('Aggregated report generation completed successfully');
+
+            } catch (error) {
+                console.error('Error generating aggregated report:', error);
+                console.error('Error stack:', error.stack);
+                console.error('Error name:', error.name);
+                console.error('Full error object:', error);
+                alert(`Error generating aggregated report: ${error.message}\n\nCheck the browser console (F12) for details.`);
+            }
         }
 
         function extractMatchData() {
@@ -2322,6 +3362,28 @@
                     videoTime: formatVideoTime(e.videoTime),
                     type: e.turnoverType,
                     location: e.turnoverLocation
+                }));
+
+            // Extract Castleknock scores
+            const castleknockScores = events
+                .filter(e => e.category === 'Shooting' && e.team === 'OUR')
+                .sort((a, b) => a.videoTime - b.videoTime)
+                .map(e => ({
+                    videoTime: formatVideoTime(e.videoTime),
+                    scoreType: e.shotType || '',
+                    zone: `${e.shotLocation || ''}|${e.shotPosition || ''}`,
+                    outcome: e.shotOutcome || ''
+                }));
+
+            // Extract opponent scores
+            const opponentScores = events
+                .filter(e => e.category === 'Shooting' && e.team === 'OPP')
+                .sort((a, b) => a.videoTime - b.videoTime)
+                .map(e => ({
+                    videoTime: formatVideoTime(e.videoTime),
+                    scoreType: e.shotType || '',
+                    zone: `${e.shotLocation || ''}|${e.shotPosition || ''}`,
+                    outcome: e.shotOutcome || ''
                 }));
 
             // Helper function to build possession data
@@ -2424,6 +3486,104 @@
             // Extract Possessions for both teams
             const castleknockAttacks = buildPossessionData('OUR', 'OPP');
             const opponentAttacks = buildPossessionData('OPP', 'OUR');
+
+            // Build data for possessions lost without attacking (turnovers in defensive/middle third)
+            function buildLostPossessionData(team, oppositeTeam) {
+                const sortedEvents = [...events].sort((a, b) => a.videoTime - b.videoTime);
+                const lostPossessions = [];
+
+                for (let i = 0; i < sortedEvents.length; i++) {
+                    const event = sortedEvents[i];
+
+                    // Check if this event represents gaining possession for our team
+                    let gainedPossession = false;
+                    if (event.category === 'Kickouts' &&
+                        ((event.team === team && event.kickoutResult === 'Won') ||
+                         (event.team === oppositeTeam && event.kickoutResult === 'Lost'))) {
+                        gainedPossession = true;
+                    } else if (event.category === 'Turnovers' && event.turnoverWonBy === team) {
+                        gainedPossession = true;
+                    } else if (event.category === 'ThrowUp' && event.wonBy === team) {
+                        gainedPossession = true;
+                    }
+
+                    if (gainedPossession) {
+                        // Look for next event
+                        for (let j = i + 1; j < sortedEvents.length; j++) {
+                            const nextEvent = sortedEvents[j];
+
+                            // Skip if it's an Attack - we don't want possessions that reached attack phase
+                            if (nextEvent.category === 'Attack' && nextEvent.team === team) {
+                                break;
+                            }
+
+                            // Check if it's a turnover lost
+                            if (nextEvent.category === 'Turnovers' &&
+                                nextEvent.turnoverWonBy === oppositeTeam) {
+
+                                // Get location from possession-gaining event
+                                let pitchLocation = '';
+                                if (event.category === 'Kickouts') {
+                                    if (event.kickoutType === 'Short') pitchLocation = 'Inside our 45';
+                                    else if (event.kickoutType === 'Medium') pitchLocation = 'our 45 to opp 45';
+                                    else if (event.kickoutType === 'Long') pitchLocation = 'Inside Opp 45';
+                                } else if (event.turnoverLocation) {
+                                    if (event.turnoverLocation === 'Defensive Third') pitchLocation = 'Inside our 45';
+                                    else if (event.turnoverLocation === 'Middle Third') pitchLocation = 'our 45 to opp 45';
+                                    else if (event.turnoverLocation === 'Attacking Third') pitchLocation = 'Inside Opp 45';
+                                }
+
+                                // Get win type
+                                let winType = '';
+                                if (event.category === 'Kickouts') {
+                                    if (event.team === 'OUR' && event.kickoutResult === 'Won') {
+                                        winType = 'CK K/O';
+                                    } else if (event.team === 'OUR' && event.kickoutResult === 'Lost') {
+                                        winType = 'Opp K/O';
+                                    } else if (event.team === 'OPP' && event.kickoutResult === 'Won') {
+                                        winType = 'Opp K/O';
+                                    } else if (event.team === 'OPP' && event.kickoutResult === 'Lost') {
+                                        winType = 'CK K/O';
+                                    }
+                                } else if (event.category === 'Turnovers') {
+                                    winType = 'T/O';
+                                } else if (event.category === 'ThrowUp') {
+                                    winType = 'Throw-up';
+                                }
+
+                                // Get turnover location for lost possession
+                                let lostLocation = '';
+                                if (nextEvent.turnoverLocation === 'Defensive Third') lostLocation = 'Inside our 45';
+                                else if (nextEvent.turnoverLocation === 'Middle Third') lostLocation = 'our 45 to opp 45';
+                                else if (nextEvent.turnoverLocation === 'Attacking Third') lostLocation = 'Inside Opp 45';
+
+                                lostPossessions.push({
+                                    timeBallWon: formatVideoTime(event.videoTime),
+                                    pitchLocation: pitchLocation,
+                                    winType: winType,
+                                    lostLocation: lostLocation,
+                                    turnoverType: nextEvent.turnoverType,
+                                    timeEnded: formatVideoTime(nextEvent.videoTime)
+                                });
+                                break;
+                            }
+
+                            // If we hit another possession-changing event, stop looking
+                            if (nextEvent.category === 'Kickouts' ||
+                                nextEvent.category === 'Turnovers' ||
+                                nextEvent.category === 'ThrowUp' ||
+                                nextEvent.category === 'Shooting') {
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                return lostPossessions;
+            }
+
+            const castleknockLostPossessions = buildLostPossessionData('OUR', 'OPP');
+            const opponentLostPossessions = buildLostPossessionData('OPP', 'OUR');
 
             // Generate Python script for creating possession clips
             function generatePythonScript(possessions, teamName, opponentName) {
@@ -2540,6 +3700,11 @@ if __name__ == '__main__':
                         h2 {
                             color: #333;
                             margin-top: 0;
+                        }
+                        h3 {
+                            color: #666;
+                            margin-top: 0;
+                            font-size: 16px;
                         }
                         .table-row {
                             display: flex;
@@ -2707,6 +3872,56 @@ if __name__ == '__main__':
 
                     <div class="table-row">
                         <div class="table-container">
+                            <h2>${team1Name} Scores</h2>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Video Time</th>
+                                        <th>Score Type</th>
+                                        <th>Zone</th>
+                                        <th>Outcome</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${castleknockScores.map(s => `
+                                        <tr>
+                                            <td>${s.videoTime}</td>
+                                            <td>${s.scoreType}</td>
+                                            <td>${s.zone}</td>
+                                            <td>${s.outcome}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="table-container">
+                            <h2>${team2Name} Scores</h2>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Video Time</th>
+                                        <th>Score Type</th>
+                                        <th>Zone</th>
+                                        <th>Outcome</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${opponentScores.map(s => `
+                                        <tr>
+                                            <td>${s.videoTime}</td>
+                                            <td>${s.scoreType}</td>
+                                            <td>${s.zone}</td>
+                                            <td>${s.outcome}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="table-row">
+                        <div class="table-container">
                             <h2>Possessions (${team1Name})</h2>
                             <a href="data:text/plain;charset=utf-8,${encodeURIComponent(castleknockPythonScript)}"
                                download="generate_${team1Name.replace(/\s/g, '_')}_clips.py"
@@ -2768,14 +3983,78 @@ if __name__ == '__main__':
                             </table>
                         </div>
                     </div>
+
+                    <h2>Possessions Lost Without Attack</h2>
+                    <div class="table-row">
+                        <div class="table-container">
+                            <h3>${team1Name}</h3>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Time Ball Won</th>
+                                        <th>Pitch Location</th>
+                                        <th>Win Type</th>
+                                        <th>Lost Location</th>
+                                        <th>Turnover Type</th>
+                                        <th>Time Ended</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${castleknockLostPossessions.map(p => `
+                                        <tr>
+                                            <td>${p.timeBallWon}</td>
+                                            <td>${p.pitchLocation}</td>
+                                            <td>${p.winType}</td>
+                                            <td>${p.lostLocation}</td>
+                                            <td>${p.turnoverType}</td>
+                                            <td>${p.timeEnded}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="table-container">
+                            <h3>${team2Name}</h3>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Time Ball Won</th>
+                                        <th>Pitch Location</th>
+                                        <th>Win Type</th>
+                                        <th>Lost Location</th>
+                                        <th>Turnover Type</th>
+                                        <th>Time Ended</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${opponentLostPossessions.map(p => `
+                                        <tr>
+                                            <td>${p.timeBallWon}</td>
+                                            <td>${p.pitchLocation}</td>
+                                            <td>${p.winType}</td>
+                                            <td>${p.lostLocation}</td>
+                                            <td>${p.turnoverType}</td>
+                                            <td>${p.timeEnded}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </body>
                 </html>
             `;
 
-            // Open in new window
-            const dataWindow = window.open('', '_blank');
-            dataWindow.document.write(html);
-            dataWindow.document.close();
+            // Create blob and open in new tab
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+
+            // Open in new tab
+            window.open(url, '_blank');
+
+            // Clean up after a delay
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
 
         function generateShotLocationMap(teamFilter) {
@@ -2826,9 +4105,9 @@ if __name__ == '__main__':
                         zone = '2145m'; // Default
                     }
 
-                    // For now, distribute shots across left/center/right evenly
-                    // In a real system, you'd capture horizontal position too
-                    distribution[`center${zone}`]++;
+                    // Use shot position field (defaults to center for older events)
+                    const position = event.shotPosition?.toLowerCase() || 'center';
+                    distribution[`${position}${zone}`]++;
                 }
             });
 
@@ -2852,9 +4131,6 @@ if __name__ == '__main__':
                     <!-- Halfway line -->
                     <line x1="10" y1="300" x2="390" y2="300" stroke="white" stroke-width="2" stroke-dasharray="10,5"/>
 
-                    <!-- Center circle -->
-                    <circle cx="200" cy="300" r="50" fill="none" stroke="white" stroke-width="2"/>
-
                     <!-- 45m lines -->
                     <line x1="10" y1="150" x2="390" y2="150" stroke="white" stroke-width="2"/>
                     <line x1="10" y1="450" x2="390" y2="450" stroke="white" stroke-width="2"/>
@@ -2872,49 +4148,49 @@ if __name__ == '__main__':
                     <rect x="185" y="585" width="30" height="10" fill="white" stroke="black" stroke-width="1"/>
 
                     <!-- SCORED shots (GREEN) - Inside 21m (closest to goal at top) -->
-                    ${scored.left21m > 0 ? `<g><circle cx="70" cy="80" r="18" fill="#4CAF50" stroke="white" stroke-width="2" opacity="0.9"/><text x="70" y="87" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${scored.left21m}</text></g>` : ''}
-                    ${scored.center21m > 0 ? `<g><circle cx="200" cy="80" r="18" fill="#4CAF50" stroke="white" stroke-width="2" opacity="0.9"/><text x="200" y="87" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${scored.center21m}</text></g>` : ''}
-                    ${scored.right21m > 0 ? `<g><circle cx="330" cy="80" r="18" fill="#4CAF50" stroke="white" stroke-width="2" opacity="0.9"/><text x="330" y="87" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${scored.right21m}</text></g>` : ''}
+                    ${scored.left21m > 0 ? `<g><circle cx="70" cy="55" r="18" fill="#4CAF50" stroke="white" stroke-width="2" opacity="0.9"/><text x="70" y="62" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${scored.left21m}</text></g>` : ''}
+                    ${scored.center21m > 0 ? `<g><circle cx="200" cy="55" r="18" fill="#4CAF50" stroke="white" stroke-width="2" opacity="0.9"/><text x="200" y="62" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${scored.center21m}</text></g>` : ''}
+                    ${scored.right21m > 0 ? `<g><circle cx="330" cy="55" r="18" fill="#4CAF50" stroke="white" stroke-width="2" opacity="0.9"/><text x="330" y="62" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${scored.right21m}</text></g>` : ''}
 
                     <!-- SCORED shots (GREEN) - 21-45m (mid-range) -->
-                    ${scored.left2145m > 0 ? `<g><circle cx="70" cy="180" r="18" fill="#4CAF50" stroke="white" stroke-width="2" opacity="0.9"/><text x="70" y="187" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${scored.left2145m}</text></g>` : ''}
-                    ${scored.center2145m > 0 ? `<g><circle cx="200" cy="180" r="18" fill="#4CAF50" stroke="white" stroke-width="2" opacity="0.9"/><text x="200" y="187" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${scored.center2145m}</text></g>` : ''}
-                    ${scored.right2145m > 0 ? `<g><circle cx="330" cy="180" r="18" fill="#4CAF50" stroke="white" stroke-width="2" opacity="0.9"/><text x="330" y="187" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${scored.right2145m}</text></g>` : ''}
+                    ${scored.left2145m > 0 ? `<g><circle cx="70" cy="120" r="18" fill="#4CAF50" stroke="white" stroke-width="2" opacity="0.9"/><text x="70" y="127" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${scored.left2145m}</text></g>` : ''}
+                    ${scored.center2145m > 0 ? `<g><circle cx="200" cy="120" r="18" fill="#4CAF50" stroke="white" stroke-width="2" opacity="0.9"/><text x="200" y="127" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${scored.center2145m}</text></g>` : ''}
+                    ${scored.right2145m > 0 ? `<g><circle cx="330" cy="120" r="18" fill="#4CAF50" stroke="white" stroke-width="2" opacity="0.9"/><text x="330" y="127" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${scored.right2145m}</text></g>` : ''}
 
                     <!-- SCORED shots (GREEN) - Beyond 45m (furthest from goal) -->
-                    ${scored.left45m > 0 ? `<g><circle cx="70" cy="480" r="18" fill="#4CAF50" stroke="white" stroke-width="2" opacity="0.9"/><text x="70" y="487" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${scored.left45m}</text></g>` : ''}
-                    ${scored.center45m > 0 ? `<g><circle cx="200" cy="480" r="18" fill="#4CAF50" stroke="white" stroke-width="2" opacity="0.9"/><text x="200" y="487" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${scored.center45m}</text></g>` : ''}
-                    ${scored.right45m > 0 ? `<g><circle cx="330" cy="480" r="18" fill="#4CAF50" stroke="white" stroke-width="2" opacity="0.9"/><text x="330" y="487" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${scored.right45m}</text></g>` : ''}
+                    ${scored.left45m > 0 ? `<g><circle cx="70" cy="175" r="18" fill="#4CAF50" stroke="white" stroke-width="2" opacity="0.9"/><text x="70" y="182" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${scored.left45m}</text></g>` : ''}
+                    ${scored.center45m > 0 ? `<g><circle cx="200" cy="175" r="18" fill="#4CAF50" stroke="white" stroke-width="2" opacity="0.9"/><text x="200" y="182" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${scored.center45m}</text></g>` : ''}
+                    ${scored.right45m > 0 ? `<g><circle cx="330" cy="175" r="18" fill="#4CAF50" stroke="white" stroke-width="2" opacity="0.9"/><text x="330" y="182" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${scored.right45m}</text></g>` : ''}
 
                     <!-- MISSED shots (RED) - Inside 21m -->
-                    ${missed.left21m > 0 ? `<g><circle cx="100" cy="80" r="18" fill="#f44336" stroke="white" stroke-width="2" opacity="0.9"/><text x="100" y="87" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${missed.left21m}</text></g>` : ''}
-                    ${missed.center21m > 0 ? `<g><circle cx="230" cy="80" r="18" fill="#f44336" stroke="white" stroke-width="2" opacity="0.9"/><text x="230" y="87" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${missed.center21m}</text></g>` : ''}
-                    ${missed.right21m > 0 ? `<g><circle cx="360" cy="80" r="18" fill="#f44336" stroke="white" stroke-width="2" opacity="0.9"/><text x="360" y="87" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${missed.right21m}</text></g>` : ''}
+                    ${missed.left21m > 0 ? `<g><circle cx="100" cy="55" r="18" fill="#f44336" stroke="white" stroke-width="2" opacity="0.9"/><text x="100" y="62" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${missed.left21m}</text></g>` : ''}
+                    ${missed.center21m > 0 ? `<g><circle cx="230" cy="55" r="18" fill="#f44336" stroke="white" stroke-width="2" opacity="0.9"/><text x="230" y="62" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${missed.center21m}</text></g>` : ''}
+                    ${missed.right21m > 0 ? `<g><circle cx="360" cy="55" r="18" fill="#f44336" stroke="white" stroke-width="2" opacity="0.9"/><text x="360" y="62" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${missed.right21m}</text></g>` : ''}
 
                     <!-- MISSED shots (RED) - 21-45m -->
-                    ${missed.left2145m > 0 ? `<g><circle cx="100" cy="180" r="18" fill="#f44336" stroke="white" stroke-width="2" opacity="0.9"/><text x="100" y="187" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${missed.left2145m}</text></g>` : ''}
-                    ${missed.center2145m > 0 ? `<g><circle cx="230" cy="180" r="18" fill="#f44336" stroke="white" stroke-width="2" opacity="0.9"/><text x="230" y="187" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${missed.center2145m}</text></g>` : ''}
-                    ${missed.right2145m > 0 ? `<g><circle cx="360" cy="180" r="18" fill="#f44336" stroke="white" stroke-width="2" opacity="0.9"/><text x="360" y="187" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${missed.right2145m}</text></g>` : ''}
+                    ${missed.left2145m > 0 ? `<g><circle cx="100" cy="120" r="18" fill="#f44336" stroke="white" stroke-width="2" opacity="0.9"/><text x="100" y="127" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${missed.left2145m}</text></g>` : ''}
+                    ${missed.center2145m > 0 ? `<g><circle cx="230" cy="120" r="18" fill="#f44336" stroke="white" stroke-width="2" opacity="0.9"/><text x="230" y="127" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${missed.center2145m}</text></g>` : ''}
+                    ${missed.right2145m > 0 ? `<g><circle cx="360" cy="120" r="18" fill="#f44336" stroke="white" stroke-width="2" opacity="0.9"/><text x="360" y="127" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${missed.right2145m}</text></g>` : ''}
 
                     <!-- MISSED shots (RED) - Beyond 45m -->
-                    ${missed.left45m > 0 ? `<g><circle cx="100" cy="480" r="18" fill="#f44336" stroke="white" stroke-width="2" opacity="0.9"/><text x="100" y="487" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${missed.left45m}</text></g>` : ''}
-                    ${missed.center45m > 0 ? `<g><circle cx="230" cy="480" r="18" fill="#f44336" stroke="white" stroke-width="2" opacity="0.9"/><text x="230" y="487" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${missed.center45m}</text></g>` : ''}
-                    ${missed.right45m > 0 ? `<g><circle cx="360" cy="480" r="18" fill="#f44336" stroke="white" stroke-width="2" opacity="0.9"/><text x="360" y="487" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${missed.right45m}</text></g>` : ''}
+                    ${missed.left45m > 0 ? `<g><circle cx="100" cy="175" r="18" fill="#f44336" stroke="white" stroke-width="2" opacity="0.9"/><text x="100" y="182" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${missed.left45m}</text></g>` : ''}
+                    ${missed.center45m > 0 ? `<g><circle cx="230" cy="175" r="18" fill="#f44336" stroke="white" stroke-width="2" opacity="0.9"/><text x="230" y="182" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${missed.center45m}</text></g>` : ''}
+                    ${missed.right45m > 0 ? `<g><circle cx="360" cy="175" r="18" fill="#f44336" stroke="white" stroke-width="2" opacity="0.9"/><text x="360" y="182" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${missed.right45m}</text></g>` : ''}
 
                     <!-- SAVED/BLOCKED shots (ORANGE) - Inside 21m -->
-                    ${savedBlocked.left21m > 0 ? `<g><circle cx="85" cy="95" r="16" fill="#FF9800" stroke="white" stroke-width="2" opacity="0.9"/><text x="85" y="101" text-anchor="middle" fill="white" font-size="14" font-weight="bold">${savedBlocked.left21m}</text></g>` : ''}
-                    ${savedBlocked.center21m > 0 ? `<g><circle cx="215" cy="95" r="16" fill="#FF9800" stroke="white" stroke-width="2" opacity="0.9"/><text x="215" y="101" text-anchor="middle" fill="white" font-size="14" font-weight="bold">${savedBlocked.center21m}</text></g>` : ''}
-                    ${savedBlocked.right21m > 0 ? `<g><circle cx="345" cy="95" r="16" fill="#FF9800" stroke="white" stroke-width="2" opacity="0.9"/><text x="345" y="101" text-anchor="middle" fill="white" font-size="14" font-weight="bold">${savedBlocked.right21m}</text></g>` : ''}
+                    ${savedBlocked.left21m > 0 ? `<g><circle cx="85" cy="70" r="16" fill="#FF9800" stroke="white" stroke-width="2" opacity="0.9"/><text x="85" y="76" text-anchor="middle" fill="white" font-size="14" font-weight="bold">${savedBlocked.left21m}</text></g>` : ''}
+                    ${savedBlocked.center21m > 0 ? `<g><circle cx="215" cy="70" r="16" fill="#FF9800" stroke="white" stroke-width="2" opacity="0.9"/><text x="215" y="76" text-anchor="middle" fill="white" font-size="14" font-weight="bold">${savedBlocked.center21m}</text></g>` : ''}
+                    ${savedBlocked.right21m > 0 ? `<g><circle cx="345" cy="70" r="16" fill="#FF9800" stroke="white" stroke-width="2" opacity="0.9"/><text x="345" y="76" text-anchor="middle" fill="white" font-size="14" font-weight="bold">${savedBlocked.right21m}</text></g>` : ''}
 
                     <!-- SAVED/BLOCKED shots (ORANGE) - 21-45m -->
-                    ${savedBlocked.left2145m > 0 ? `<g><circle cx="85" cy="195" r="16" fill="#FF9800" stroke="white" stroke-width="2" opacity="0.9"/><text x="85" y="201" text-anchor="middle" fill="white" font-size="14" font-weight="bold">${savedBlocked.left2145m}</text></g>` : ''}
-                    ${savedBlocked.center2145m > 0 ? `<g><circle cx="215" cy="195" r="16" fill="#FF9800" stroke="white" stroke-width="2" opacity="0.9"/><text x="215" y="201" text-anchor="middle" fill="white" font-size="14" font-weight="bold">${savedBlocked.center2145m}</text></g>` : ''}
-                    ${savedBlocked.right2145m > 0 ? `<g><circle cx="345" cy="195" r="16" fill="#FF9800" stroke="white" stroke-width="2" opacity="0.9"/><text x="345" y="201" text-anchor="middle" fill="white" font-size="14" font-weight="bold">${savedBlocked.right2145m}</text></g>` : ''}
+                    ${savedBlocked.left2145m > 0 ? `<g><circle cx="85" cy="135" r="16" fill="#FF9800" stroke="white" stroke-width="2" opacity="0.9"/><text x="85" y="141" text-anchor="middle" fill="white" font-size="14" font-weight="bold">${savedBlocked.left2145m}</text></g>` : ''}
+                    ${savedBlocked.center2145m > 0 ? `<g><circle cx="215" cy="135" r="16" fill="#FF9800" stroke="white" stroke-width="2" opacity="0.9"/><text x="215" y="141" text-anchor="middle" fill="white" font-size="14" font-weight="bold">${savedBlocked.center2145m}</text></g>` : ''}
+                    ${savedBlocked.right2145m > 0 ? `<g><circle cx="345" cy="135" r="16" fill="#FF9800" stroke="white" stroke-width="2" opacity="0.9"/><text x="345" y="141" text-anchor="middle" fill="white" font-size="14" font-weight="bold">${savedBlocked.right2145m}</text></g>` : ''}
 
                     <!-- SAVED/BLOCKED shots (ORANGE) - Beyond 45m -->
-                    ${savedBlocked.left45m > 0 ? `<g><circle cx="85" cy="495" r="16" fill="#FF9800" stroke="white" stroke-width="2" opacity="0.9"/><text x="85" y="501" text-anchor="middle" fill="white" font-size="14" font-weight="bold">${savedBlocked.left45m}</text></g>` : ''}
-                    ${savedBlocked.center45m > 0 ? `<g><circle cx="215" cy="495" r="16" fill="#FF9800" stroke="white" stroke-width="2" opacity="0.9"/><text x="215" y="501" text-anchor="middle" fill="white" font-size="14" font-weight="bold">${savedBlocked.center45m}</text></g>` : ''}
-                    ${savedBlocked.right45m > 0 ? `<g><circle cx="345" cy="495" r="16" fill="#FF9800" stroke="white" stroke-width="2" opacity="0.9"/><text x="345" y="501" text-anchor="middle" fill="white" font-size="14" font-weight="bold">${savedBlocked.right45m}</text></g>` : ''}
+                    ${savedBlocked.left45m > 0 ? `<g><circle cx="85" cy="190" r="16" fill="#FF9800" stroke="white" stroke-width="2" opacity="0.9"/><text x="85" y="196" text-anchor="middle" fill="white" font-size="14" font-weight="bold">${savedBlocked.left45m}</text></g>` : ''}
+                    ${savedBlocked.center45m > 0 ? `<g><circle cx="215" cy="190" r="16" fill="#FF9800" stroke="white" stroke-width="2" opacity="0.9"/><text x="215" y="196" text-anchor="middle" fill="white" font-size="14" font-weight="bold">${savedBlocked.center45m}</text></g>` : ''}
+                    ${savedBlocked.right45m > 0 ? `<g><circle cx="345" cy="190" r="16" fill="#FF9800" stroke="white" stroke-width="2" opacity="0.9"/><text x="345" y="196" text-anchor="middle" fill="white" font-size="14" font-weight="bold">${savedBlocked.right45m}</text></g>` : ''}
 
                     <!-- Direction of Play Arrow -->
                     <g transform="translate(360, 300)">
@@ -3000,9 +4276,6 @@ if __name__ == '__main__':
                     <!-- Halfway line -->
                     <line x1="10" y1="300" x2="390" y2="300" stroke="white" stroke-width="2" stroke-dasharray="10,5"/>
 
-                    <!-- Center circle -->
-                    <circle cx="200" cy="300" r="50" fill="none" stroke="white" stroke-width="2"/>
-
                     <!-- 45m lines (approximate) -->
                     <line x1="10" y1="150" x2="390" y2="150" stroke="white" stroke-width="2"/>
                     <line x1="10" y1="450" x2="390" y2="450" stroke="white" stroke-width="2"/>
@@ -3021,33 +4294,33 @@ if __name__ == '__main__':
 
                     <!-- WON Kickout markers (BLUE) - Attacking (top), Midfield (middle), Defensive (bottom) -->
                     <!-- Left side -->
-                    ${won.leftAttacking > 0 ? `<g><circle cx="70" cy="120" r="18" fill="#2196F3" opacity="0.9"/><text x="70" y="127" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.leftAttacking}</text></g>` : ''}
-                    ${won.leftMidfield > 0 ? `<g><circle cx="70" cy="300" r="18" fill="#2196F3" opacity="0.9"/><text x="70" y="307" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.leftMidfield}</text></g>` : ''}
+                    ${won.leftAttacking > 0 ? `<g><circle cx="70" cy="225" r="18" fill="#2196F3" opacity="0.9"/><text x="70" y="232" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.leftAttacking}</text></g>` : ''}
+                    ${won.leftMidfield > 0 ? `<g><circle cx="70" cy="375" r="18" fill="#2196F3" opacity="0.9"/><text x="70" y="382" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.leftMidfield}</text></g>` : ''}
                     ${won.leftDefensive > 0 ? `<g><circle cx="70" cy="480" r="18" fill="#2196F3" opacity="0.9"/><text x="70" y="487" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.leftDefensive}</text></g>` : ''}
 
                     <!-- LOST Kickout markers (RED) - Left -->
-                    ${lost.leftAttacking > 0 ? `<g><circle cx="100" cy="120" r="18" fill="#f44336" opacity="0.9"/><text x="100" y="127" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.leftAttacking}</text></g>` : ''}
-                    ${lost.leftMidfield > 0 ? `<g><circle cx="100" cy="300" r="18" fill="#f44336" opacity="0.9"/><text x="100" y="307" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.leftMidfield}</text></g>` : ''}
+                    ${lost.leftAttacking > 0 ? `<g><circle cx="100" cy="225" r="18" fill="#f44336" opacity="0.9"/><text x="100" y="232" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.leftAttacking}</text></g>` : ''}
+                    ${lost.leftMidfield > 0 ? `<g><circle cx="100" cy="375" r="18" fill="#f44336" opacity="0.9"/><text x="100" y="382" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.leftMidfield}</text></g>` : ''}
                     ${lost.leftDefensive > 0 ? `<g><circle cx="100" cy="480" r="18" fill="#f44336" opacity="0.9"/><text x="100" y="487" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.leftDefensive}</text></g>` : ''}
 
                     <!-- WON Kickout markers (BLUE) - Center -->
-                    ${won.centerAttacking > 0 ? `<g><circle cx="185" cy="120" r="18" fill="#2196F3" opacity="0.9"/><text x="185" y="127" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.centerAttacking}</text></g>` : ''}
-                    ${won.centerMidfield > 0 ? `<g><circle cx="185" cy="230" r="18" fill="#2196F3" opacity="0.9"/><text x="185" y="237" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.centerMidfield}</text></g>` : ''}
+                    ${won.centerAttacking > 0 ? `<g><circle cx="185" cy="225" r="18" fill="#2196F3" opacity="0.9"/><text x="185" y="232" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.centerAttacking}</text></g>` : ''}
+                    ${won.centerMidfield > 0 ? `<g><circle cx="185" cy="375" r="18" fill="#2196F3" opacity="0.9"/><text x="185" y="382" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.centerMidfield}</text></g>` : ''}
                     ${won.centerDefensive > 0 ? `<g><circle cx="185" cy="480" r="18" fill="#2196F3" opacity="0.9"/><text x="185" y="487" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.centerDefensive}</text></g>` : ''}
 
                     <!-- LOST Kickout markers (RED) - Center -->
-                    ${lost.centerAttacking > 0 ? `<g><circle cx="215" cy="120" r="18" fill="#f44336" opacity="0.9"/><text x="215" y="127" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.centerAttacking}</text></g>` : ''}
-                    ${lost.centerMidfield > 0 ? `<g><circle cx="215" cy="230" r="18" fill="#f44336" opacity="0.9"/><text x="215" y="237" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.centerMidfield}</text></g>` : ''}
+                    ${lost.centerAttacking > 0 ? `<g><circle cx="215" cy="225" r="18" fill="#f44336" opacity="0.9"/><text x="215" y="232" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.centerAttacking}</text></g>` : ''}
+                    ${lost.centerMidfield > 0 ? `<g><circle cx="215" cy="375" r="18" fill="#f44336" opacity="0.9"/><text x="215" y="382" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.centerMidfield}</text></g>` : ''}
                     ${lost.centerDefensive > 0 ? `<g><circle cx="215" cy="480" r="18" fill="#f44336" opacity="0.9"/><text x="215" y="487" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.centerDefensive}</text></g>` : ''}
 
                     <!-- WON Kickout markers (BLUE) - Right -->
-                    ${won.rightAttacking > 0 ? `<g><circle cx="300" cy="120" r="18" fill="#2196F3" opacity="0.9"/><text x="300" y="127" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.rightAttacking}</text></g>` : ''}
-                    ${won.rightMidfield > 0 ? `<g><circle cx="300" cy="300" r="18" fill="#2196F3" opacity="0.9"/><text x="300" y="307" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.rightMidfield}</text></g>` : ''}
+                    ${won.rightAttacking > 0 ? `<g><circle cx="300" cy="225" r="18" fill="#2196F3" opacity="0.9"/><text x="300" y="232" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.rightAttacking}</text></g>` : ''}
+                    ${won.rightMidfield > 0 ? `<g><circle cx="300" cy="375" r="18" fill="#2196F3" opacity="0.9"/><text x="300" y="382" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.rightMidfield}</text></g>` : ''}
                     ${won.rightDefensive > 0 ? `<g><circle cx="300" cy="480" r="18" fill="#2196F3" opacity="0.9"/><text x="300" y="487" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.rightDefensive}</text></g>` : ''}
 
                     <!-- LOST Kickout markers (RED) - Right -->
-                    ${lost.rightAttacking > 0 ? `<g><circle cx="330" cy="120" r="18" fill="#f44336" opacity="0.9"/><text x="330" y="127" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.rightAttacking}</text></g>` : ''}
-                    ${lost.rightMidfield > 0 ? `<g><circle cx="330" cy="300" r="18" fill="#f44336" opacity="0.9"/><text x="330" y="307" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.rightMidfield}</text></g>` : ''}
+                    ${lost.rightAttacking > 0 ? `<g><circle cx="330" cy="225" r="18" fill="#f44336" opacity="0.9"/><text x="330" y="232" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.rightAttacking}</text></g>` : ''}
+                    ${lost.rightMidfield > 0 ? `<g><circle cx="330" cy="375" r="18" fill="#f44336" opacity="0.9"/><text x="330" y="382" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.rightMidfield}</text></g>` : ''}
                     ${lost.rightDefensive > 0 ? `<g><circle cx="330" cy="480" r="18" fill="#f44336" opacity="0.9"/><text x="330" y="487" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.rightDefensive}</text></g>` : ''}
 
                     <!-- Direction of Play Arrow -->
@@ -3068,7 +4341,7 @@ if __name__ == '__main__':
             `;
         }
 
-        function generateReportHTML(stats) {
+        function generateReportHTML(stats, isAggregated = false, matchCount = 1) {
             const ourGoals = stats.our.shooting.goals;
             const ourPoints = stats.our.shooting.points;
             const ourTotal = (ourGoals * 3) + ourPoints;
@@ -3082,12 +4355,19 @@ if __name__ == '__main__':
             const ourShotMap = generateShotLocationMap('OUR');
             const oppShotMap = generateShotLocationMap('OPP');
 
+            // Use "Opponents" for aggregated reports, actual team name for single match
+            const oppDisplayName = isAggregated ? 'Opponents' : team2Name;
+
+            const reportTitle = isAggregated
+                ? `Aggregated Statistics Report - ${team1Name} vs ${oppDisplayName} (${matchCount} Matches)`
+                : `Match Statistics Report - ${team1Name} vs ${oppDisplayName}`;
+
             return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Match Statistics Report - ${team1Name} vs ${team2Name}</title>
+    <title>${reportTitle}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -3218,7 +4498,7 @@ if __name__ == '__main__':
     <div class="report-container">
         <div class="report-header">
             <div class="report-title">GAELIC FOOTBALL STATISTICS REPORT</div>
-            <div class="report-subtitle">${team1Name} vs ${team2Name}</div>
+            <div class="report-subtitle">${team1Name} vs ${oppDisplayName}${isAggregated ? ` (${matchCount} Matches)` : ''}</div>
         </div>
 
         <div class="match-info">
@@ -3229,7 +4509,7 @@ if __name__ == '__main__':
             </div>
             <div class="vs">VS</div>
             <div class="team-section">
-                <div class="team-name">${team2Name}</div>
+                <div class="team-name">${oppDisplayName}</div>
                 <div class="team-score">${oppGoals}-${String(oppPoints).padStart(2, '0')}</div>
                 <div style="color: #666; font-size: 14px;">${oppTotal} POINTS</div>
             </div>
@@ -3266,7 +4546,7 @@ if __name__ == '__main__':
                     </div>
                 </div>
                 <div class="stat-card opp">
-                    <h3>${team2Name}</h3>
+                    <h3>${oppDisplayName}</h3>
                     <div class="stat-item">
                         <span class="stat-label">Possessions</span>
                         <span class="stat-value">${stats.opp.productivity.possessions}</span>
@@ -3316,7 +4596,7 @@ if __name__ == '__main__':
                     </div>
                 </div>
                 <div class="stat-card opp">
-                    <h3>${team2Name}</h3>
+                    <h3>${oppDisplayName}</h3>
                     <div class="stat-item">
                         <span class="stat-label">Total</span>
                         <span class="stat-value">${stats.opp.kickouts.total}</span>
@@ -3333,6 +4613,18 @@ if __name__ == '__main__':
                         <span class="stat-label">Success Rate</span>
                         <span class="stat-value highlight">${stats.opp.kickouts.successRate}%</span>
                     </div>
+                </div>
+            </div>
+
+            <h2 style="margin: 30px 0 20px 0;">Kickout Distribution</h2>
+            <div class="stats-row">
+                <div class="stat-card">
+                    <h3>${team1Name} Kickouts</h3>
+                    ${ourKickoutDistribution}
+                </div>
+                <div class="stat-card opp">
+                    <h3>${oppDisplayName} Kickouts</h3>
+                    ${oppKickoutDistribution}
                 </div>
             </div>
 
@@ -3382,7 +4674,7 @@ if __name__ == '__main__':
                     </div>
                 </div>
                 <div class="stat-card opp">
-                    <h3>${team2Name}</h3>
+                    <h3>${oppDisplayName}</h3>
                     <div class="stat-item">
                         <span class="stat-label">Goals</span>
                         <span class="stat-value">${stats.opp.shooting.goals}</span>
@@ -3426,6 +4718,18 @@ if __name__ == '__main__':
                 </div>
             </div>
 
+            <h2 style="margin: 30px 0 20px 0;">Shot Location Map</h2>
+            <div class="stats-row">
+                <div class="stat-card">
+                    <h3>${team1Name} Shots</h3>
+                    ${ourShotMap}
+                </div>
+                <div class="stat-card opp">
+                    <h3>${oppDisplayName} Shots</h3>
+                    ${oppShotMap}
+                </div>
+            </div>
+
             <h2 style="margin-bottom: 20px;">Turnovers Won</h2>
             <div class="stats-row">
                 <div class="stat-card">
@@ -3448,7 +4752,7 @@ if __name__ == '__main__':
                     </div>
                 </div>
                 <div class="stat-card opp">
-                    <h3>${team2Name}</h3>
+                    <h3>${oppDisplayName}</h3>
                     <div class="stat-item">
                         <span class="stat-label">Total</span>
                         <span class="stat-value">${stats.opp.turnovers.total}</span>
@@ -3486,7 +4790,7 @@ if __name__ == '__main__':
                     </div>
                 </div>
                 <div class="stat-card opp">
-                    <h3>${team2Name}</h3>
+                    <h3>${oppDisplayName}</h3>
                     <div class="stat-item">
                         <span class="stat-label">Turnovers</span>
                         <span class="stat-value">${stats.opp.scoreSource.turnovers}</span>
@@ -3499,30 +4803,6 @@ if __name__ == '__main__':
                         <span class="stat-label">Own Kickouts</span>
                         <span class="stat-value">${stats.opp.scoreSource.ownKickouts}</span>
                     </div>
-                </div>
-            </div>
-
-            <h2 style="margin: 30px 0 20px 0;">Kickout Distribution</h2>
-            <div class="stats-row">
-                <div class="stat-card">
-                    <h3>${team1Name} Kickouts</h3>
-                    ${ourKickoutDistribution}
-                </div>
-                <div class="stat-card opp">
-                    <h3>${team2Name} Kickouts</h3>
-                    ${oppKickoutDistribution}
-                </div>
-            </div>
-
-            <h2 style="margin: 30px 0 20px 0;">Shot Location Map</h2>
-            <div class="stats-row">
-                <div class="stat-card">
-                    <h3>${team1Name} Shots</h3>
-                    ${ourShotMap}
-                </div>
-                <div class="stat-card opp">
-                    <h3>${team2Name} Shots</h3>
-                    ${oppShotMap}
                 </div>
             </div>
         </div>

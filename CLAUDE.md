@@ -60,6 +60,7 @@ Each event contains:
   // Shooting:
   shotType: "Free" | "Play" | "45" | "Penalty",
   shotLocation: "Inside 21m" | "21-45m" | "Beyond 45m",
+  shotPosition: "Left" | "Center" | "Right",
   shotOutcome: "Goal" | "Point" | "Wide" | "Short" | "Saved" | "Blocked",
   // Throw Up:
   wonBy: "OUR" | "OPP"
@@ -83,6 +84,7 @@ Each event contains:
 - Team: OUR, OPP
 - Shot Type: Free, Play, 45, Penalty
 - Shot Location: Inside 21m, 21-45m, Beyond 45m
+- Shot Position: Left, Center, Right
 - Shot Outcome: Goal, Point, Wide, Short, Saved, Blocked
 
 **Throw Up:**
