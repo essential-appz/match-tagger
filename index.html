@@ -1646,7 +1646,7 @@
                     color = '#FF9800'; // Orange
                 }
 
-                // Create smaller, semi-transparent circles for history
+                // Create smaller circles for history
                 const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                 circle.setAttribute('cx', x);
                 circle.setAttribute('cy', y);
@@ -1654,7 +1654,7 @@
                 circle.setAttribute('fill', color);
                 circle.setAttribute('stroke', 'white');
                 circle.setAttribute('stroke-width', '1.5');
-                circle.setAttribute('opacity', '0.5');
+                circle.setAttribute('opacity', '0.9');
 
                 container.appendChild(circle);
             });
