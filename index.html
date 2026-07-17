@@ -956,6 +956,8 @@
                 <div class="button-group">
                     <button class="option-btn" data-field="kickoutResult" data-value="Won" onclick="selectOption(this)">Won</button>
                     <button class="option-btn" data-field="kickoutResult" data-value="Lost" onclick="selectOption(this)">Lost</button>
+                </div>
+                <div class="button-group">
                     <button class="option-btn" data-field="kickoutResult" data-value="Clean" onclick="selectOption(this)">Clean</button>
                     <button class="option-btn" data-field="kickoutResult" data-value="Breaking Ball" onclick="selectOption(this)">Breaking Ball</button>
                     <button class="option-btn" data-field="kickoutResult" data-value="Sideline" onclick="selectOption(this)">Sideline</button>
@@ -1584,9 +1586,9 @@
             const field = btn.dataset.field;
             const value = btn.dataset.value;
 
-            // Clear other selections in the same field
-            const siblings = btn.parentElement.querySelectorAll('.option-btn');
-            siblings.forEach(s => s.classList.remove('selected'));
+            // Clear other selections in the same field (across all button groups)
+            const allFieldButtons = document.querySelectorAll(`.option-btn[data-field="${field}"]`);
+            allFieldButtons.forEach(b => b.classList.remove('selected'));
 
             btn.classList.add('selected');
             currentEvent[field] = value;
