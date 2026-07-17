@@ -956,8 +956,9 @@
                 <div class="button-group">
                     <button class="option-btn" data-field="kickoutResult" data-value="Won" onclick="selectOption(this)">Won</button>
                     <button class="option-btn" data-field="kickoutResult" data-value="Lost" onclick="selectOption(this)">Lost</button>
+                    <button class="option-btn" data-field="kickoutResult" data-value="Clean" onclick="selectOption(this)">Clean</button>
                     <button class="option-btn" data-field="kickoutResult" data-value="Breaking Ball" onclick="selectOption(this)">Breaking Ball</button>
-                    <button class="option-btn" data-field="kickoutResult" data-value="Contested" onclick="selectOption(this)">Contested</button>
+                    <button class="option-btn" data-field="kickoutResult" data-value="Sideline" onclick="selectOption(this)">Sideline</button>
                 </div>
             </div>
 
@@ -1612,7 +1613,7 @@
 
             if (result === 'Lost') {
                 color = '#f44336'; // Red
-            } else if (result === 'Breaking Ball' || result === 'Contested') {
+            } else if (result === 'Breaking Ball' || result === 'Clean' || result === 'Sideline') {
                 color = '#FF9800'; // Orange for neutral outcomes
             }
 
@@ -1643,7 +1644,7 @@
                 let color = '#2196F3'; // Blue for Won
                 if (kickout.kickoutResult === 'Lost') {
                     color = '#f44336'; // Red
-                } else if (kickout.kickoutResult === 'Breaking Ball' || kickout.kickoutResult === 'Contested') {
+                } else if (kickout.kickoutResult === 'Breaking Ball' || kickout.kickoutResult === 'Clean' || kickout.kickoutResult === 'Sideline') {
                     color = '#FF9800'; // Orange
                 }
 
@@ -2600,7 +2601,7 @@
                 ],
                 optional: [
                     { key: 'kickoutType', label: 'Kickout Type', description: 'For Kickouts: Short, Medium, Long' },
-                    { key: 'kickoutResult', label: 'Kickout Result', description: 'For Kickouts: Won, Lost, Breaking Ball, Contested' },
+                    { key: 'kickoutResult', label: 'Kickout Result', description: 'For Kickouts: Won, Lost, Clean, Breaking Ball, Sideline' },
                     { key: 'kickoutLocation', label: 'Kickout Location', description: 'For Kickouts: Left, Center, Right' },
                     { key: 'turnoverType', label: 'Turnover Type', description: 'For Turnovers' },
                     { key: 'turnoverLocation', label: 'Turnover Location', description: 'For Turnovers' },
