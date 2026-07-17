@@ -997,7 +997,7 @@
 
                     <!-- Marker (initially hidden) -->
                     <g id="kickoutMarker" class="kickout-marker" style="display: none;">
-                        <circle cx="0" cy="0" r="15" fill="#FF9800" stroke="white" stroke-width="3" opacity="0.9"/>
+                        <circle id="kickoutMarkerCircle" cx="0" cy="0" r="15" fill="#2196F3" stroke="white" stroke-width="3" opacity="0.9"/>
                         <circle cx="0" cy="0" r="5" fill="white" opacity="0.9"/>
                     </g>
                 </svg>
@@ -1558,6 +1558,11 @@
                 marker.style.display = 'none';
             }
 
+            // Reset marker color for Kickouts category
+            if (category === 'Kickouts') {
+                updateKickoutMarkerColor();
+            }
+
             updateTagButton();
         }
 
@@ -1575,7 +1580,28 @@
             btn.classList.add('selected');
             currentEvent[field] = value;
 
+            // Update marker color if kickoutResult changed
+            if (field === 'kickoutResult') {
+                updateKickoutMarkerColor();
+            }
+
             updateTagButton();
+        }
+
+        function updateKickoutMarkerColor() {
+            const markerCircle = document.getElementById('kickoutMarkerCircle');
+            if (!markerCircle) return;
+
+            const result = currentEvent.kickoutResult;
+            let color = '#2196F3'; // Default blue for Won
+
+            if (result === 'Lost') {
+                color = '#f44336'; // Red
+            } else if (result === 'Breaking Ball' || result === 'Contested') {
+                color = '#FF9800'; // Orange for neutral outcomes
+            }
+
+            markerCircle.setAttribute('fill', color);
         }
 
         function handlePitchClick(event) {
@@ -1623,6 +1649,9 @@
             const marker = document.getElementById('kickoutMarker');
             marker.setAttribute('transform', `translate(${x}, ${y})`);
             marker.style.display = 'block';
+
+            // Update marker color based on current result selection
+            updateKickoutMarkerColor();
 
             // Store coordinates in currentEvent for later visualization
             currentEvent.kickoutX = x;
