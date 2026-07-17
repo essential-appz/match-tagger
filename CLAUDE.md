@@ -52,7 +52,8 @@ Each event contains:
   // Category-specific fields:
   // Kickouts:
   kickoutType: "Short" | "Long" | "Medium",
-  kickoutResult: "Won" | "Lost" | "Clean" | "Breaking Ball" | "Sideline",
+  kickoutOutcome: "Won" | "Lost",
+  kickoutQuality: "Clean" | "Breaking Ball" | "Sideline",
   kickoutLocation: "Left" | "Center" | "Right",
   // Turnovers:
   turnoverType: "Forced" | "Unforced" | "Interception" | "Tackle" | "Dispossessed" | "Block Down",
@@ -71,9 +72,10 @@ Each event contains:
 
 **Kickouts:**
 - Team: OUR, OPP
-- Kickout Type: Short, Long, Medium
-- Kickout Result: Won, Lost, Clean, Breaking Ball, Sideline
-- Kickout Location: Left, Center, Right
+- Kickout Outcome: Won, Lost (optional)
+- Kickout Quality: Clean, Breaking Ball, Sideline (optional)
+- Kickout Type: Short, Long, Medium (auto-set by pitch map)
+- Kickout Location: Left, Center, Right (auto-set by pitch map)
 
 **Turnovers:**
 - Team: OUR, OPP

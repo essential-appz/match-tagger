@@ -959,15 +959,19 @@
             </div>
 
             <div class="option-group">
-                <label>Kickout Result</label>
+                <label>Kickout Outcome</label>
                 <div class="button-group">
-                    <button class="option-btn" data-field="kickoutResult" data-value="Won" onclick="selectOption(this)">Won</button>
-                    <button class="option-btn" data-field="kickoutResult" data-value="Lost" onclick="selectOption(this)">Lost</button>
+                    <button class="option-btn" data-field="kickoutOutcome" data-value="Won" onclick="selectOption(this)">Won</button>
+                    <button class="option-btn" data-field="kickoutOutcome" data-value="Lost" onclick="selectOption(this)">Lost</button>
                 </div>
+            </div>
+
+            <div class="option-group">
+                <label>Kickout Quality</label>
                 <div class="button-group">
-                    <button class="option-btn" data-field="kickoutResult" data-value="Clean" onclick="selectOption(this)">Clean</button>
-                    <button class="option-btn" data-field="kickoutResult" data-value="Breaking Ball" onclick="selectOption(this)">Breaking Ball</button>
-                    <button class="option-btn" data-field="kickoutResult" data-value="Sideline" onclick="selectOption(this)">Sideline</button>
+                    <button class="option-btn" data-field="kickoutQuality" data-value="Clean" onclick="selectOption(this)">Clean</button>
+                    <button class="option-btn" data-field="kickoutQuality" data-value="Breaking Ball" onclick="selectOption(this)">Breaking Ball</button>
+                    <button class="option-btn" data-field="kickoutQuality" data-value="Sideline" onclick="selectOption(this)">Sideline</button>
                 </div>
             </div>
 
@@ -1611,8 +1615,8 @@
             btn.classList.add('selected');
             currentEvent[field] = value;
 
-            // Update marker color if kickoutResult changed
-            if (field === 'kickoutResult') {
+            // Update marker color if kickout outcome or quality changed
+            if (field === 'kickoutOutcome' || field === 'kickoutQuality') {
                 updateKickoutMarkerColor();
             }
 
@@ -1628,13 +1632,16 @@
             const markerCircle = document.getElementById('kickoutMarkerCircle');
             if (!markerCircle) return;
 
-            const result = currentEvent.kickoutResult;
+            const outcome = currentEvent.kickoutOutcome;
             let color = '#2196F3'; // Default blue for Won
 
-            if (result === 'Lost') {
+            if (outcome === 'Lost') {
                 color = '#f44336'; // Red
-            } else if (result === 'Breaking Ball' || result === 'Clean' || result === 'Sideline') {
-                color = '#FF9800'; // Orange for neutral outcomes
+            } else if (outcome === 'Won') {
+                color = '#2196F3'; // Blue
+            } else {
+                // No outcome selected, use grey
+                color = '#9E9E9E';
             }
 
             markerCircle.setAttribute('fill', color);
@@ -1660,12 +1667,16 @@
                 const x = kickout.kickoutX;
                 const y = kickout.kickoutY;
 
-                // Determine color based on result
+                // Determine color based on outcome (support both new and old format)
+                const outcome = kickout.kickoutOutcome || kickout.kickoutResult;
                 let color = '#2196F3'; // Blue for Won
-                if (kickout.kickoutResult === 'Lost') {
+                if (outcome === 'Lost') {
                     color = '#f44336'; // Red
-                } else if (kickout.kickoutResult === 'Breaking Ball' || kickout.kickoutResult === 'Clean' || kickout.kickoutResult === 'Sideline') {
-                    color = '#FF9800'; // Orange
+                } else if (outcome === 'Won') {
+                    color = '#2196F3'; // Blue
+                } else {
+                    // No outcome or legacy values
+                    color = '#9E9E9E'; // Grey
                 }
 
                 // Create smaller circles for history
@@ -1994,7 +2005,7 @@
 
             // Define all possible fields for each category
             const categoryFields = {
-                'Kickouts': ['team', 'teamName', 'kickoutType', 'kickoutResult', 'kickoutLocation'],
+                'Kickouts': ['team', 'teamName', 'kickoutType', 'kickoutOutcome', 'kickoutQuality', 'kickoutLocation'],
                 'Turnovers': ['turnoverWonBy', 'teamName', 'turnoverType', 'turnoverLocation'],
                 'Shooting': ['team', 'teamName', 'shotType', 'shotLocation', 'shotPosition', 'shotOutcome'],
                 'ThrowUp': ['wonBy', 'teamName'],
@@ -2141,21 +2152,22 @@
                 }
 
                 if (event.category === 'Kickouts') {
-                    // Count kickouts
+                    // Count kickouts (support both new and old format)
+                    const outcome = event.kickoutOutcome || event.kickoutResult;
                     if (event.team === 'OUR') {
                         kickoutsOur++;
-                        if (event.kickoutResult === 'Won') kickoutsWonOur++;
+                        if (outcome === 'Won') kickoutsWonOur++;
                     } else {
                         kickoutsOpp++;
-                        if (event.kickoutResult === 'Won') kickoutsWonOpp++;
+                        if (outcome === 'Won') kickoutsWonOpp++;
                     }
 
                     // Determine who gained possession
-                    if ((event.team === 'OUR' && event.kickoutResult === 'Won') ||
-                        (event.team === 'OPP' && event.kickoutResult === 'Lost')) {
+                    if ((event.team === 'OUR' && outcome === 'Won') ||
+                        (event.team === 'OPP' && outcome === 'Lost')) {
                         possessionGainedBy = 'OUR';
-                    } else if ((event.team === 'OPP' && event.kickoutResult === 'Won') ||
-                               (event.team === 'OUR' && event.kickoutResult === 'Lost')) {
+                    } else if ((event.team === 'OPP' && outcome === 'Won') ||
+                               (event.team === 'OUR' && outcome === 'Lost')) {
                         possessionGainedBy = 'OPP';
                     }
                 }
@@ -2248,12 +2260,13 @@
             let possessionGainedBy = null;
 
             if (event.category === 'Kickouts') {
-                // Kickout possession logic
-                if ((event.team === 'OUR' && event.kickoutResult === 'Won') ||
-                    (event.team === 'OPP' && event.kickoutResult === 'Lost')) {
+                // Kickout possession logic (support both new and old format)
+                const outcome = event.kickoutOutcome || event.kickoutResult;
+                if ((event.team === 'OUR' && outcome === 'Won') ||
+                    (event.team === 'OPP' && outcome === 'Lost')) {
                     possessionGainedBy = 'OUR';
-                } else if ((event.team === 'OPP' && event.kickoutResult === 'Won') ||
-                           (event.team === 'OUR' && event.kickoutResult === 'Lost')) {
+                } else if ((event.team === 'OPP' && outcome === 'Won') ||
+                           (event.team === 'OUR' && outcome === 'Lost')) {
                     possessionGainedBy = 'OPP';
                 }
             } else if (event.category === 'Turnovers') {
@@ -2621,7 +2634,8 @@
                 ],
                 optional: [
                     { key: 'kickoutType', label: 'Kickout Type', description: 'For Kickouts: Short, Medium, Long' },
-                    { key: 'kickoutResult', label: 'Kickout Result', description: 'For Kickouts: Won, Lost, Clean, Breaking Ball, Sideline' },
+                    { key: 'kickoutOutcome', label: 'Kickout Outcome', description: 'For Kickouts: Won, Lost' },
+                    { key: 'kickoutQuality', label: 'Kickout Quality', description: 'For Kickouts: Clean, Breaking Ball, Sideline' },
                     { key: 'kickoutLocation', label: 'Kickout Location', description: 'For Kickouts: Left, Center, Right' },
                     { key: 'turnoverType', label: 'Turnover Type', description: 'For Turnovers' },
                     { key: 'turnoverLocation', label: 'Turnover Location', description: 'For Turnovers' },
@@ -3285,7 +3299,8 @@
                 // Kickouts
                 if (event.category === 'Kickouts') {
                     stats[team].kickouts.total++;
-                    if (event.kickoutResult === 'Won') {
+                    const outcome = event.kickoutOutcome || event.kickoutResult; // Support old format
+                    if (outcome === 'Won') {
                         stats[team].kickouts.won++;
                         possessionHistory.push({ type: 'kickout', team: event.team, event });
 
@@ -3295,7 +3310,7 @@
                             else possessionsOpp++;
                         }
                         currentPossession = { source: 'ownKickout', team: event.team };
-                    } else if (event.kickoutResult === 'Lost') {
+                    } else if (outcome === 'Lost') {
                         stats[team].kickouts.lost++;
                         const oppTeam = event.team === 'OUR' ? 'OPP' : 'OUR';
                         possessionHistory.push({ type: 'kickout', team: oppTeam, event });
@@ -3785,7 +3800,8 @@
                 .map(e => ({
                     videoTime: formatVideoTime(e.videoTime),
                     location: encodeKickoutLocation(e.kickoutType, e.kickoutLocation),
-                    result: e.kickoutResult
+                    result: e.kickoutOutcome || e.kickoutResult,
+                    quality: e.kickoutQuality
                 }));
 
             // Extract opponent kickouts
@@ -3795,7 +3811,8 @@
                 .map(e => ({
                     videoTime: formatVideoTime(e.videoTime),
                     location: encodeKickoutLocation(e.kickoutType, e.kickoutLocation),
-                    result: e.kickoutResult
+                    result: e.kickoutOutcome || e.kickoutResult,
+                    quality: e.kickoutQuality
                 }));
 
             // Extract Castleknock turnovers won
