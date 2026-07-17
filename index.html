@@ -698,6 +698,41 @@
             background: #999;
         }
 
+        /* Pitch Map Styles */
+        .pitch-map-container {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .pitch-map-container label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .pitch-map {
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto;
+            display: block;
+            cursor: crosshair;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            background: #4CAF50;
+        }
+
+        .pitch-map:hover {
+            border-color: #2196F3;
+        }
+
+        .kickout-marker {
+            transition: all 0.2s;
+        }
+
         /* CSV Converter Styles */
         .mapping-row {
             display: flex;
@@ -915,6 +950,59 @@
                     <button class="option-btn" data-field="team" data-value="OPP" onclick="selectOption(this)">Opposition</button>
                 </div>
             </div>
+
+            <!-- Interactive Pitch Map -->
+            <div class="pitch-map-container">
+                <label>Click where kickout landed:</label>
+                <svg id="kickoutPitchMap" class="pitch-map" viewBox="0 0 400 600" onclick="handlePitchClick(event)">
+                    <!-- Field background -->
+                    <rect width="400" height="600" fill="#4CAF50"/>
+
+                    <!-- Field lines -->
+                    <rect x="10" y="10" width="380" height="580" fill="none" stroke="white" stroke-width="3"/>
+
+                    <!-- Goal areas -->
+                    <rect x="130" y="10" width="140" height="60" fill="none" stroke="white" stroke-width="2"/>
+                    <rect x="130" y="530" width="140" height="60" fill="none" stroke="white" stroke-width="2"/>
+
+                    <!-- Small rectangles (goal box) -->
+                    <rect x="170" y="10" width="60" height="30" fill="none" stroke="white" stroke-width="2"/>
+                    <rect x="170" y="560" width="60" height="30" fill="none" stroke="white" stroke-width="2"/>
+
+                    <!-- Halfway line -->
+                    <line x1="10" y1="300" x2="390" y2="300" stroke="white" stroke-width="2" stroke-dasharray="10,5"/>
+
+                    <!-- 45m lines (zones: 0-200 = Attacking/Long, 200-400 = Midfield/Medium, 400-590 = Defensive/Short) -->
+                    <line x1="10" y1="200" x2="390" y2="200" stroke="white" stroke-width="2"/>
+                    <line x1="10" y1="400" x2="390" y2="400" stroke="white" stroke-width="2"/>
+
+                    <!-- 21m arcs -->
+                    <path d="M 80 70 Q 200 100 320 70" fill="none" stroke="white" stroke-width="2"/>
+                    <path d="M 80 530 Q 200 500 320 530" fill="none" stroke="white" stroke-width="2"/>
+
+                    <!-- Goals -->
+                    <rect x="185" y="5" width="30" height="10" fill="white" stroke="black" stroke-width="1"/>
+                    <rect x="185" y="585" width="30" height="10" fill="white" stroke="black" stroke-width="1"/>
+
+                    <!-- Zone labels -->
+                    <text x="200" y="100" text-anchor="middle" fill="white" font-size="14" font-weight="bold" opacity="0.6">LONG</text>
+                    <text x="200" y="300" text-anchor="middle" fill="white" font-size="14" font-weight="bold" opacity="0.6">MEDIUM</text>
+                    <text x="200" y="500" text-anchor="middle" fill="white" font-size="14" font-weight="bold" opacity="0.6">SHORT</text>
+
+                    <!-- Direction arrow -->
+                    <g transform="translate(360, 300)">
+                        <line x1="0" y1="60" x2="0" y2="-60" stroke="white" stroke-width="3" opacity="0.5"/>
+                        <polygon points="0,-60 -8,-50 8,-50" fill="white" opacity="0.5"/>
+                    </g>
+
+                    <!-- Marker (initially hidden) -->
+                    <g id="kickoutMarker" class="kickout-marker" style="display: none;">
+                        <circle cx="0" cy="0" r="15" fill="#FF9800" stroke="white" stroke-width="3" opacity="0.9"/>
+                        <circle cx="0" cy="0" r="5" fill="white" opacity="0.9"/>
+                    </g>
+                </svg>
+            </div>
+
             <div class="option-group">
                 <label>Kickout Type</label>
                 <div class="button-group">
@@ -1464,6 +1552,12 @@
                 btn.classList.remove('selected');
             });
 
+            // Hide kickout marker when switching categories
+            const marker = document.getElementById('kickoutMarker');
+            if (marker) {
+                marker.style.display = 'none';
+            }
+
             updateTagButton();
         }
 
@@ -1482,6 +1576,66 @@
             currentEvent[field] = value;
 
             updateTagButton();
+        }
+
+        function handlePitchClick(event) {
+            // Only work if Kickouts category is selected
+            if (currentCategory !== 'Kickouts') return;
+
+            const svg = event.currentTarget;
+            const pt = svg.createSVGPoint();
+
+            // Get click coordinates in SVG coordinate space
+            pt.x = event.clientX;
+            pt.y = event.clientY;
+            const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+
+            const x = svgP.x;
+            const y = svgP.y;
+
+            // Only respond to clicks within the field boundaries (10-390, 10-590)
+            if (x < 10 || x > 390 || y < 10 || y > 590) return;
+
+            // Map Y coordinate to kickoutType
+            // Zones: 10-200 = Long (Attacking), 200-400 = Medium (Midfield), 400-590 = Short (Defensive)
+            let kickoutType;
+            if (y < 200) {
+                kickoutType = 'Long';
+            } else if (y < 400) {
+                kickoutType = 'Medium';
+            } else {
+                kickoutType = 'Short';
+            }
+
+            // Map X coordinate to kickoutLocation
+            // Left: 10-143, Center: 143-257, Right: 257-390
+            let kickoutLocation;
+            const third = (390 - 10) / 3;
+            if (x < 10 + third) {
+                kickoutLocation = 'Left';
+            } else if (x < 10 + (third * 2)) {
+                kickoutLocation = 'Center';
+            } else {
+                kickoutLocation = 'Right';
+            }
+
+            // Update the marker position
+            const marker = document.getElementById('kickoutMarker');
+            marker.setAttribute('transform', `translate(${x}, ${y})`);
+            marker.style.display = 'block';
+
+            // Programmatically select the corresponding buttons
+            // Find and click the kickoutType button
+            const typeButton = document.querySelector(`#kickoutsOptions button[data-field="kickoutType"][data-value="${kickoutType}"]`);
+            if (typeButton) {
+                selectOption(typeButton);
+            }
+
+            // Find and click the kickoutLocation button
+            const locationButton = document.querySelector(`#kickoutsOptions button[data-field="kickoutLocation"][data-value="${kickoutLocation}"]`);
+            if (locationButton) {
+                selectOption(locationButton);
+            }
         }
 
         function updateTagButton() {
