@@ -995,6 +995,9 @@
                         <polygon points="0,-60 -8,-50 8,-50" fill="white" opacity="0.5"/>
                     </g>
 
+                    <!-- Historical kickout markers for selected team -->
+                    <g id="historicalKickouts"></g>
+
                     <!-- Marker (initially hidden) -->
                     <g id="kickoutMarker" class="kickout-marker" style="display: none;">
                         <circle id="kickoutMarkerCircle" cx="0" cy="0" r="15" fill="#2196F3" stroke="white" stroke-width="3" opacity="0.9"/>
@@ -1558,6 +1561,12 @@
                 marker.style.display = 'none';
             }
 
+            // Clear historical kickout markers
+            const historicalContainer = document.getElementById('historicalKickouts');
+            if (historicalContainer) {
+                historicalContainer.innerHTML = '';
+            }
+
             // Reset marker color for Kickouts category
             if (category === 'Kickouts') {
                 updateKickoutMarkerColor();
@@ -1585,6 +1594,11 @@
                 updateKickoutMarkerColor();
             }
 
+            // Show historical kickouts if team selected in Kickouts category
+            if (field === 'team' && currentCategory === 'Kickouts') {
+                showHistoricalKickouts(value);
+            }
+
             updateTagButton();
         }
 
@@ -1602,6 +1616,48 @@
             }
 
             markerCircle.setAttribute('fill', color);
+        }
+
+        function showHistoricalKickouts(team) {
+            const container = document.getElementById('historicalKickouts');
+            if (!container) return;
+
+            // Clear existing markers
+            container.innerHTML = '';
+
+            // Filter kickout events for this team that have coordinates
+            const teamKickouts = events.filter(event =>
+                event.category === 'Kickouts' &&
+                event.team === team &&
+                event.kickoutX &&
+                event.kickoutY
+            );
+
+            // Create a marker for each historical kickout
+            teamKickouts.forEach((kickout, index) => {
+                const x = kickout.kickoutX;
+                const y = kickout.kickoutY;
+
+                // Determine color based on result
+                let color = '#2196F3'; // Blue for Won
+                if (kickout.kickoutResult === 'Lost') {
+                    color = '#f44336'; // Red
+                } else if (kickout.kickoutResult === 'Breaking Ball' || kickout.kickoutResult === 'Contested') {
+                    color = '#FF9800'; // Orange
+                }
+
+                // Create smaller, semi-transparent circles for history
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', x);
+                circle.setAttribute('cy', y);
+                circle.setAttribute('r', '6');
+                circle.setAttribute('fill', color);
+                circle.setAttribute('stroke', 'white');
+                circle.setAttribute('stroke-width', '1.5');
+                circle.setAttribute('opacity', '0.5');
+
+                container.appendChild(circle);
+            });
         }
 
         function handlePitchClick(event) {
@@ -1771,6 +1827,16 @@
             document.querySelectorAll('.option-btn').forEach(btn => {
                 btn.classList.remove('selected');
             });
+
+            // Store team value before clearing currentEvent for historical marker refresh
+            const selectedTeam = currentEvent.team;
+
+            // Hide current placement marker after tagging
+            const marker = document.getElementById('kickoutMarker');
+            if (marker) {
+                marker.style.display = 'none';
+            }
+
             currentEvent = { category: currentCategory };
 
             updateUI();
@@ -1781,6 +1847,17 @@
 
             // Update possession based on this newly tagged event (after updateProductivityMetrics)
             updatePossessionFromEvent(possessionUpdateEvent);
+
+            // Refresh historical markers if in Kickouts category and team was selected
+            if (currentCategory === 'Kickouts' && selectedTeam) {
+                // Re-select the team to refresh historical markers
+                const teamButton = document.querySelector(`#kickoutsOptions button[data-field="team"][data-value="${selectedTeam}"]`);
+                if (teamButton) {
+                    teamButton.classList.add('selected');
+                    currentEvent.team = selectedTeam;
+                    showHistoricalKickouts(selectedTeam);
+                }
+            }
         }
 
         // ============================================
