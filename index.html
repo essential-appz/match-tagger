@@ -1624,6 +1624,10 @@
             marker.setAttribute('transform', `translate(${x}, ${y})`);
             marker.style.display = 'block';
 
+            // Store coordinates in currentEvent for later visualization
+            currentEvent.kickoutX = x;
+            currentEvent.kickoutY = y;
+
             // Programmatically select the corresponding buttons
             // Find and click the kickoutType button
             const typeButton = document.querySelector(`#kickoutsOptions button[data-field="kickoutType"][data-value="${kickoutType}"]`);
@@ -4367,48 +4371,25 @@ if __name__ == '__main__':
         }
 
         function generateKickoutDistribution(teamFilter) {
-            // Count kickouts by location zones and result (won/lost)
-            const won = {
-                leftDefensive: 0, centerDefensive: 0, rightDefensive: 0,
-                leftMidfield: 0, centerMidfield: 0, rightMidfield: 0,
-                leftAttacking: 0, centerAttacking: 0, rightAttacking: 0
-            };
-            const lost = {
-                leftDefensive: 0, centerDefensive: 0, rightDefensive: 0,
-                leftMidfield: 0, centerMidfield: 0, rightMidfield: 0,
-                leftAttacking: 0, centerAttacking: 0, rightAttacking: 0
-            };
+            // Collect kickout events with coordinates
+            const kickouts = events.filter(event =>
+                event.category === 'Kickouts' && event.team === teamFilter
+            );
 
-            events.forEach(event => {
-                if (event.category === 'Kickouts' && event.team === teamFilter) {
-                    const loc = event.kickoutLocation;
-                    const type = event.kickoutType;
-                    const isWon = event.kickoutResult === 'Won';
-                    const distribution = isWon ? won : lost;
+            // Generate individual markers for each kickout at its exact position
+            const markers = kickouts.map((event, index) => {
+                const x = event.kickoutX;
+                const y = event.kickoutY;
 
-                    // Map kickout type and location to field zones
-                    // Short → Defensive third, Medium → Midfield, Long → Attacking third
-                    let zone = '';
-                    if (type === 'Short') {
-                        zone = 'Defensive';
-                    } else if (type === 'Medium') {
-                        zone = 'Midfield';
-                    } else if (type === 'Long') {
-                        zone = 'Attacking';
-                    } else {
-                        // Default to midfield if type not specified
-                        zone = 'Midfield';
-                    }
+                // If no coordinates stored (legacy events), skip
+                if (!x || !y) return '';
 
-                    if (loc === 'Left') {
-                        distribution[`left${zone}`]++;
-                    } else if (loc === 'Center') {
-                        distribution[`center${zone}`]++;
-                    } else if (loc === 'Right') {
-                        distribution[`right${zone}`]++;
-                    }
-                }
-            });
+                const isWon = event.kickoutResult === 'Won';
+                const color = isWon ? '#2196F3' : '#f44336';
+
+                // Use smaller circles for individual markers
+                return `<circle cx="${x}" cy="${y}" r="8" fill="${color}" stroke="white" stroke-width="2" opacity="0.8"/>`;
+            }).join('\n');
 
             // Create SVG field with markers
             return `
@@ -4446,36 +4427,8 @@ if __name__ == '__main__':
                     <rect x="185" y="5" width="30" height="10" fill="white" stroke="black" stroke-width="1"/>
                     <rect x="185" y="585" width="30" height="10" fill="white" stroke="black" stroke-width="1"/>
 
-                    <!-- WON Kickout markers (BLUE) - Attacking (top), Midfield (middle), Defensive (bottom) -->
-                    <!-- Left side -->
-                    ${won.leftAttacking > 0 ? `<g><circle cx="70" cy="225" r="18" fill="#2196F3" opacity="0.9"/><text x="70" y="232" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.leftAttacking}</text></g>` : ''}
-                    ${won.leftMidfield > 0 ? `<g><circle cx="70" cy="375" r="18" fill="#2196F3" opacity="0.9"/><text x="70" y="382" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.leftMidfield}</text></g>` : ''}
-                    ${won.leftDefensive > 0 ? `<g><circle cx="70" cy="480" r="18" fill="#2196F3" opacity="0.9"/><text x="70" y="487" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.leftDefensive}</text></g>` : ''}
-
-                    <!-- LOST Kickout markers (RED) - Left -->
-                    ${lost.leftAttacking > 0 ? `<g><circle cx="100" cy="225" r="18" fill="#f44336" opacity="0.9"/><text x="100" y="232" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.leftAttacking}</text></g>` : ''}
-                    ${lost.leftMidfield > 0 ? `<g><circle cx="100" cy="375" r="18" fill="#f44336" opacity="0.9"/><text x="100" y="382" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.leftMidfield}</text></g>` : ''}
-                    ${lost.leftDefensive > 0 ? `<g><circle cx="100" cy="480" r="18" fill="#f44336" opacity="0.9"/><text x="100" y="487" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.leftDefensive}</text></g>` : ''}
-
-                    <!-- WON Kickout markers (BLUE) - Center -->
-                    ${won.centerAttacking > 0 ? `<g><circle cx="185" cy="225" r="18" fill="#2196F3" opacity="0.9"/><text x="185" y="232" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.centerAttacking}</text></g>` : ''}
-                    ${won.centerMidfield > 0 ? `<g><circle cx="185" cy="375" r="18" fill="#2196F3" opacity="0.9"/><text x="185" y="382" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.centerMidfield}</text></g>` : ''}
-                    ${won.centerDefensive > 0 ? `<g><circle cx="185" cy="480" r="18" fill="#2196F3" opacity="0.9"/><text x="185" y="487" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.centerDefensive}</text></g>` : ''}
-
-                    <!-- LOST Kickout markers (RED) - Center -->
-                    ${lost.centerAttacking > 0 ? `<g><circle cx="215" cy="225" r="18" fill="#f44336" opacity="0.9"/><text x="215" y="232" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.centerAttacking}</text></g>` : ''}
-                    ${lost.centerMidfield > 0 ? `<g><circle cx="215" cy="375" r="18" fill="#f44336" opacity="0.9"/><text x="215" y="382" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.centerMidfield}</text></g>` : ''}
-                    ${lost.centerDefensive > 0 ? `<g><circle cx="215" cy="480" r="18" fill="#f44336" opacity="0.9"/><text x="215" y="487" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.centerDefensive}</text></g>` : ''}
-
-                    <!-- WON Kickout markers (BLUE) - Right -->
-                    ${won.rightAttacking > 0 ? `<g><circle cx="300" cy="225" r="18" fill="#2196F3" opacity="0.9"/><text x="300" y="232" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.rightAttacking}</text></g>` : ''}
-                    ${won.rightMidfield > 0 ? `<g><circle cx="300" cy="375" r="18" fill="#2196F3" opacity="0.9"/><text x="300" y="382" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.rightMidfield}</text></g>` : ''}
-                    ${won.rightDefensive > 0 ? `<g><circle cx="300" cy="480" r="18" fill="#2196F3" opacity="0.9"/><text x="300" y="487" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${won.rightDefensive}</text></g>` : ''}
-
-                    <!-- LOST Kickout markers (RED) - Right -->
-                    ${lost.rightAttacking > 0 ? `<g><circle cx="330" cy="225" r="18" fill="#f44336" opacity="0.9"/><text x="330" y="232" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.rightAttacking}</text></g>` : ''}
-                    ${lost.rightMidfield > 0 ? `<g><circle cx="330" cy="375" r="18" fill="#f44336" opacity="0.9"/><text x="330" y="382" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.rightMidfield}</text></g>` : ''}
-                    ${lost.rightDefensive > 0 ? `<g><circle cx="330" cy="480" r="18" fill="#f44336" opacity="0.9"/><text x="330" y="487" text-anchor="middle" fill="white" font-size="16" font-weight="bold">${lost.rightDefensive}</text></g>` : ''}
+                    <!-- Individual kickout markers at exact coordinates -->
+                    ${markers}
 
                     <!-- Direction of Play Arrow -->
                     <g transform="translate(360, 300)">
